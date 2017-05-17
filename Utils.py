@@ -1,11 +1,6 @@
 import numpy as np
 from hfo import *
 
-para_bound_dir_upper = 180
-para_bound_dir_lower = -180
-para_bound_power_lower = 0
-para_bound_power_upper = 100
-
 
 class Experience:
     def __init__(self, prev_state, cur_state, action, reward, done):
@@ -26,22 +21,21 @@ class Action:
 def get_action(action_arr):
     res = Action()
     copy = np.copy(action_arr)
-    copy[0][2] = -99999
+    copy[2] = float(-99999)
     res.action = 0
-    cur_max = action_arr[0][0]
+    cur_max = action_arr[0]
     for i in range(0, 3):
-        if copy[0][i] > cur_max:
+        if copy[i] > cur_max:
             res.action = i
     if res.action == 0:
-        res.param1 = action_arr[0][4]
-        res.param2 = action_arr[0][5]
+        res.param1 = action_arr[4]
+        res.param2 = action_arr[5]
     elif res.action == 1:
-        res.param1 = action_arr[0][6]
+        res.param1 = action_arr[6]
         res.param2 = 0
     elif res.action == 3:
-        res.param1 = action_arr[0][8]
-        res.param2 = action_arr[0][9]
-
+        res.param1 = action_arr[8]
+        res.param2 = action_arr[9]
     return res
 
 

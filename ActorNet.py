@@ -7,11 +7,12 @@ from keras.layers.core import Dense
 
 max_turn_angle = 180
 min_turn_angle = -180
-max_power=100
+max_power = 100
 min_power = 0
 
+
 class ActorNet:
-    def __init__(self, sess,tau, learning_rate=0.001, team_size=1, enemy_size=0, ):
+    def __init__(self, sess, tau, learning_rate=0.001, team_size=1, enemy_size=0, ):
         self.sess = sess
         self.TAU = tau
         K.set_session(sess)
@@ -41,14 +42,14 @@ class ActorNet:
     def create_actor_network(self, state_size, action_dim):
         print("Building actor model")
         actor_input = Input(shape=[state_size])
-        dense1 = Dense(1024, activation='linear')(actor_input)
+        dense1 = Dense(1024, activation='linear',kernel_initializer='glorot_normal')(actor_input)
         relu1 = LeakyReLU(alpha=self.relu_neg_slope)(dense1)
-        dense2 = Dense(512, activation='linear')(relu1)
+        dense2 = Dense(512, activation='linear',kernel_initializer='glorot_normal')(relu1)
         relu2 = LeakyReLU(alpha=self.relu_neg_slope)(dense2)
-        dense3 = Dense(256, activation='linear')(relu2)
+        dense3 = Dense(256, activation='linear',kernel_initializer='glorot_normal')(relu2)
         relu3 = LeakyReLU(alpha=self.relu_neg_slope)(dense3)
-        dense4 = Dense(128, activation='linear')(relu3)
+        dense4 = Dense(128, activation='linear',kernel_initializer='glorot_normal')(relu3)
         relu4 = LeakyReLU(alpha=self.relu_neg_slope)(dense4)
-        actor_out = Dense(action_dim, activation='linear')(relu4)
+        actor_out = Dense(action_dim, activation='linear',kernel_initializer='glorot_normal')(relu4)
         model = Model(inputs=actor_input, outputs=actor_out)
         return model, model.trainable_weights, actor_input

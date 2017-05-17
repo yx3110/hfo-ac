@@ -32,7 +32,7 @@ num_opponents = 0
 tau = 0.001  # Tau value used in target network update
 num_features = (58 + (num_players - 1) * 8 + num_opponents * 8) * num_players
 step_counter = 0
-load_model = True  # Load the model
+load_model = False  # Load the model
 train = True
 num_games = 0
 e = startE
@@ -56,14 +56,15 @@ with tf.Session() as sess:
     # activate HFO agent(s)
     # players = []
     print("Now we load the weight")
-    try:
-        actor.model.load_weights("actormodel.h5")
-        critic.model.load_weights("criticmodel.h5")
-        actor.target_model.load_weights("actormodel.h5")
-        critic.target_model.load_weights("criticmodel.h5")
-        print("Weight load successfully")
-    except:
-        print("Cannot find the weight")
+    if load_model:
+        try:
+            actor.model.load_weights("actormodel.h5")
+            critic.model.load_weights("criticmodel.h5")
+            actor.target_model.load_weights("actormodel.h5")
+            critic.target_model.load_weights("criticmodel.h5")
+            print("Weight load successfully")
+        except:
+            print("Cannot find the weight")
 
     for i in range(num_players):
         hfo = HFOEnvironment()
@@ -85,7 +86,7 @@ with tf.Session() as sess:
             loss = 0
             # Grab the state features from the environment
             state = hfo.getState()
-            action_arr = actor.model.predict(np.reshape(state, [1, num_features]))
+            action_arr = actor.model.predict(np.reshape(state, [1, num_features]))[0]
             candidate_action = utils.get_action(action_arr)
             dice = random.uniform(0, 1)
             if dice < e:
@@ -103,6 +104,7 @@ with tf.Session() as sess:
                 e -= stepDrop
             # Take an action and get the current game status
             utils.take_action(hfo, candidate_action)
+            print action_arr
             game_status = hfo.step()
             new_state = hfo.getState()
             reward = utils.calculate_reward(state, new_state, game_status)
