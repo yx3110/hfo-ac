@@ -21,7 +21,7 @@ class Action:
 def get_action(action_arr):
     res = Action()
     copy = np.copy(action_arr)
-    copy[2] = float(-99999)
+    copy[2] = float(-999999999999)
     res.action = 0
     cur_max = action_arr[0]
     for i in range(0, 3):

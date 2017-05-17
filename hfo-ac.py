@@ -19,14 +19,14 @@ path = "./hfo-ac/"  # The path to save our model to.
 if not os.path.exists(path):
     os.makedirs(path)
 
-batch_size = 32  # batch size for training
+batch_size = 300  # batch size for training
 y = .99  # Discount factor on the target Q-values
 startE = 1  # Starting chance of random action
 endE = 0.05  # Final chance of random action
 discount_factor = 0.99
 annealing_steps = 10000.  # How many steps of training to reduce startE to endE.
 num_episodes = 10000  # How many episodes of game environment to train network with.
-pre_train_steps = 1000  # How many steps of random actions before training begins.
+pre_train_steps = 10000  # How many steps of random actions before training begins.
 num_players = 1
 num_opponents = 0
 tau = 0.001  # Tau value used in target network update
