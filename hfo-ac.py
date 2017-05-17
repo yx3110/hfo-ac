@@ -93,13 +93,24 @@ with tf.Session() as sess:
                 new_candidate_action = random.randint(0, 3)
                 while new_candidate_action == 2:
                     new_candidate_action = random.randint(0, 3)
-                candidate_action.action = new_candidate_action
-                if new_candidate_action == 0 or new_candidate_action == 3:
-                    candidate_action.param1 = random.uniform(-100, 100)
+                if new_candidate_action == 0:
+                    candidate_action.param1 = random.uniform(0, 100)
+                    action_arr[4] = candidate_action.param1
                     candidate_action.param2 = random.uniform(-180, 180)
+                    action_arr[5] = candidate_action.param2
+                    action_arr[0] = action_arr[candidate_action.action]+1
+                elif new_candidate_action == 3:
+                    candidate_action.param1 = random.uniform(0, 100)
+                    action_arr[8] = candidate_action.param1
+                    candidate_action.param2 = random.uniform(-180, 180)
+                    action_arr[9] = candidate_action.param2
+                    action_arr[3] = action_arr[candidate_action.action]+1
                 else:
                     candidate_action.param1 = random.uniform(-180, 180)
+                    action_arr[6] = candidate_action.param1
                     candidate_action.param2 = 0
+                    action_arr[1] = action_arr[candidate_action.action]+1
+                candidate_action.action = new_candidate_action
             if e >= endE:
                 e -= stepDrop
             # Take an action and get the current game status
