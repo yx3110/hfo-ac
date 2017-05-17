@@ -6,12 +6,14 @@ para_bound_dir_lower = -180
 para_bound_power_lower = 0
 para_bound_power_upper = 100
 
+
 class Experience:
-    def __init__(self, prev_state, cur_state, action, reward):
+    def __init__(self, prev_state, cur_state, action, reward, done):
         self.prev_state = prev_state
         self.cur_state = cur_state
         self.action = action
         self.reward = reward
+        self.done = done
 
 
 class Action:
@@ -50,7 +52,7 @@ def take_action(env, action):
         env.act(action.action, action.param1)
 
 
-def calculate_reward(state1, state2, scored, team_size=1, opponent_size=0):
+def calculate_reward(state1, state2, game_status, team_size=1, opponent_size=0):
     ball_dist1 = []
     ball_dist2 = []
     goal_dist1 = []
@@ -66,10 +68,10 @@ def calculate_reward(state1, state2, scored, team_size=1, opponent_size=0):
     able_to_kick2 = state2[5]
     kick_reward = 0
     goal_reward = 0
-    if scored == GOAL:
-        goal_reward = 5
+    if game_status == GOAL:
+        goal_reward = 10
     if able_to_kick2 == 1 and able_to_kick1 == -1:
-        kick_reward = 1
+        kick_reward = 5
 
     # temp hack of reward
-    return ball_dist2[0] - ball_dist1[0] + kick_reward + 3 * (goal_dist2[0] - goal_dist1[0]) + goal_reward
+    return ball_dist1[0] - ball_dist2[0] + kick_reward + 3 * (goal_dist1[0] - goal_dist2[0]) + goal_reward

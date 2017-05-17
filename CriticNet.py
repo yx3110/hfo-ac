@@ -1,47 +1,55 @@
+import keras.backend as K
 import tensorflow as tf
-import numpy as np
-from keras.layers.core import Dense, Dropout, Activation
-import keras as keras
+from keras import Input
+from keras import layers
+from keras.engine import Model
+from keras.layers import LeakyReLU, Concatenate
+from keras.layers.core import Dense
+from keras.optimizers import Adam
 
 
 class CriticNet:
-    def __init__(self, learning_rate=0.001, team_size=1, enemy_size=0):
-        relu_neg_slope = 0.01
-        self.input_size = (58 + (team_size - 1) * 8 + enemy_size * 8) * team_size + 10 * team_size
-        self.critic_input = tf.placeholder(shape=[None, self.input_size], dtype=tf.float32)
-        self.critic_target = tf.placeholder(dtype=tf.float32, name="critic_target")
+    def __init__(self, sess, tau, learning_rate=0.001, team_size=1, enemy_size=0):
+        self.TAU = tau
+        self.relu_neg_slope = 0.01
+        self.learning_rate = learning_rate
+        self.input_size = (58 + (team_size - 1) * 8 + enemy_size * 8) * team_size
+        self.sess = sess
+        K.set_session(sess)
 
-        self.dense1 = Dense(1024, activation=keras.layers.advanced_activations.LeakyReLU(alpha=relu_neg_slope)) \
-            (self.critic_input)
-        self.dense2 = Dense(512, activation=keras.layers.advanced_activations.LeakyReLU(alpha=relu_neg_slope)) \
-            (self.dense1)
-        self.dense3 = Dense(256, activation=keras.layers.advanced_activations.LeakyReLU(alpha=relu_neg_slope)) \
-            (self.dense2)
-        self.dense4 = Dense(128, activation=keras.layers.advanced_activations.LeakyReLU(alpha=relu_neg_slope)) \
-            (self.dense3)
-        self.critic_out = Dense(1, activation=keras.layers.advanced_activations.LeakyReLU(alpha=relu_neg_slope)) \
-            (self.dense4)
-        self.critic_loss = tf.squared_difference(self.critic_out, self.critic_target)
+        self.model, self.action, self.state = self.create_critic_network(self.input_size, 10)
+        self.target_model, self.target_action, self.target_state = self.create_critic_network(self.input_size, 10)
+        self.action_grads = tf.gradients(self.model.output, self.action)  # GRADIENTS for policy update
 
-        self.grads_wrt_input_tensor = tf.gradients(self.critic_loss, self.critic_input)[0]
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-        self.train_op_critic = self.optimizer.minimize(
-            self.critic_loss)
+    def gradients(self, states, actions):
+        return self.sess.run(self.action_grads, feed_dict={
+            self.state: states,
+            self.action: actions
+        })[0]
 
-    def predict(self, state, action, sess=None):
-        cur_input = np.reshape(np.append(state, action), [1, self.input_size])
+    def target_train(self):
+        critic_weights = self.model.get_weights()
+        critic_target_weights = self.target_model.get_weights()
+        for i in xrange(len(critic_weights)):
+            critic_target_weights[i] = self.TAU * critic_weights[i] + (1 - self.TAU) * critic_target_weights[i]
+        self.target_model.set_weights(critic_target_weights)
 
-        return sess.run(self.critic_out, {self.critic_input: cur_input})
+    def create_critic_network(self, state_size, action_dim):
+        print("Building critic model")
+        critic_input_action = Input(shape=[action_dim])
+        critic_input_state = Input(shape=[state_size])
+        critic_input_final = layers.concatenate([critic_input_state, critic_input_action], axis=1)
+        dense1 = Dense(1024, activation='linear')(critic_input_final)
+        relu1 = LeakyReLU(alpha=self.relu_neg_slope)(dense1)
+        dense2 = Dense(512, activation='linear')(relu1)
+        relu2 = LeakyReLU(alpha=self.relu_neg_slope)(dense2)
+        dense3 = Dense(256, activation='linear')(relu2)
+        relu3 = LeakyReLU(alpha=self.relu_neg_slope)(dense3)
+        dense4 = Dense(128, activation='linear')(relu3)
+        relu4 = LeakyReLU(alpha=self.relu_neg_slope)(dense4)
+        critic_out = Dense(1, activation='linear')(relu4)
 
-    def update(self, state, target, sess=None):
-        sess = sess or tf.get_default_session()
-        state = np.reshape(state, [1, self.input_size])
-        feed_dict = {self.critic_input: state, self.critic_target: target}
-        _, loss = sess.run([self.train_op_critic, self.critic_loss], feed_dict)
-        return loss
-
-    def grads_wrt_input(self, state, target, sess=None):
-        state = np.reshape(state, [1, self.input_size])
-        feed_dict = {self.critic_input: state, self.critic_target: target}
-        _, gradient = sess.run([self.train_op_critic, self.grads_wrt_input_tensor], feed_dict)
-        return gradient
+        model = Model(input=[critic_input_state, critic_input_action], output=critic_out)
+        adam = Adam(lr=self.learning_rate)
+        model.compile(loss='mse', optimizer=adam)
+        return model, critic_input_action, critic_input_state
