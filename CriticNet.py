@@ -1,19 +1,19 @@
 import keras.backend as K
+import numpy as np
 import tensorflow as tf
 from keras import Input
 from keras import layers
 from keras.engine import Model
-from keras.layers import LeakyReLU, Concatenate
+from keras.layers import LeakyReLU, initializers
 from keras.layers.core import Dense
 from keras.optimizers import Adam
-import numpy as np
-from Utils import Action
-import Utils as utils
 
 max_turn_angle = 180
 min_turn_angle = -180
 max_power = 100
 min_power = 0
+max_value_bound = 1000
+min_value_bound = -1000
 
 
 def bound(grad, param, max, min):
@@ -24,19 +24,19 @@ def bound(grad, param, max, min):
 
 
 def bound_grads(cur_grads, cur_actions, index):
-    if index >= 4:
-        if index == 4:
-            cur_grads[4] = bound(cur_grads[4], cur_actions[index], max_power, min_power)
-        elif index == 5:
-            cur_grads[5] = bound(cur_grads[5], cur_actions[index], max_turn_angle, min_turn_angle)
-        elif index == 6:
-            cur_grads[6] = bound(cur_grads[6], cur_actions[index], max_turn_angle, min_turn_angle)
-        elif index == 7:
-            cur_grads[7] = bound(cur_grads[7], cur_actions[index], max_turn_angle, min_turn_angle)
-        elif index == 8:
-            cur_grads[8] = bound(cur_grads[8], cur_actions[index], max_power, min_power)
-        elif index == 9:
-            cur_grads[9] = bound(cur_grads[9], cur_actions[index], max_turn_angle, min_turn_angle)
+
+    if index == 4:
+        cur_grads[4] = bound(cur_grads[4], cur_actions[index], max_power, min_power)
+    elif index == 5:
+        cur_grads[5] = bound(cur_grads[5], cur_actions[index], max_turn_angle, min_turn_angle)
+    elif index == 6:
+        cur_grads[6] = bound(cur_grads[6], cur_actions[index], max_turn_angle, min_turn_angle)
+    elif index == 7:
+        cur_grads[7] = bound(cur_grads[7], cur_actions[index], max_turn_angle, min_turn_angle)
+    elif index == 8:
+        cur_grads[8] = bound(cur_grads[8], cur_actions[index], max_power, min_power)
+    elif index == 9:
+        cur_grads[9] = bound(cur_grads[9], cur_actions[index], max_turn_angle, min_turn_angle)
 
 
 class CriticNet:
@@ -57,9 +57,8 @@ class CriticNet:
             self.state: states,
             self.action: actions
         })[0]
-
-        for i in range(len(grads)):
-            for j in range(len(grads[i])):
+        for i in xrange(len(grads)):
+            for j in xrange(len(grads[i])):
                 bound_grads(grads[i], actions[i], j)
         return grads
 
@@ -75,15 +74,15 @@ class CriticNet:
         critic_input_action = Input(shape=[action_dim])
         critic_input_state = Input(shape=[state_size])
         critic_input_final = layers.concatenate([critic_input_state, critic_input_action], axis=1)
-        dense1 = Dense(1024, activation='linear', kernel_initializer='he_normal')(critic_input_final)
+        dense1 = Dense(1024, activation='linear', kernel_initializer=initializers.he_normal(seed=0.01))(critic_input_final)
         relu1 = LeakyReLU(alpha=self.relu_neg_slope)(dense1)
-        dense2 = Dense(512, activation='linear', kernel_initializer='he_normal')(relu1)
+        dense2 = Dense(512, activation='linear', kernel_initializer=initializers.he_normal(seed=0.01))(relu1)
         relu2 = LeakyReLU(alpha=self.relu_neg_slope)(dense2)
-        dense3 = Dense(256, activation='linear', kernel_initializer='he_normal')(relu2)
+        dense3 = Dense(256, activation='linear', kernel_initializer=initializers.he_normal(seed=0.01))(relu2)
         relu3 = LeakyReLU(alpha=self.relu_neg_slope)(dense3)
-        dense4 = Dense(128, activation='linear', kernel_initializer='he_normal')(relu3)
+        dense4 = Dense(128, activation='linear', kernel_initializer=initializers.he_normal(seed=0.01))(relu3)
         relu4 = LeakyReLU(alpha=self.relu_neg_slope)(dense4)
-        critic_out = Dense(1, activation='linear', kernel_initializer='he_normal')(relu4)
+        critic_out = Dense(1, activation='linear', kernel_initializer=initializers.he_normal(seed=0.01))(relu4)
 
         model = Model(input=[critic_input_state, critic_input_action], output=critic_out)
         adam = Adam(lr=self.learning_rate)

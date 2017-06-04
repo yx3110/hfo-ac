@@ -1,4 +1,3 @@
-import numpy as np
 from hfo import *
 
 
@@ -20,12 +19,12 @@ class Action:
 
 def get_action(action_arr):
     res = Action()
-    copy = np.copy(action_arr)
-    copy[2] = float(-999999999999)
     res.action = 0
     cur_max = action_arr[0]
-    for i in range(0, 3):
-        if copy[i] > cur_max:
+    for i in xrange(0, 3):
+        if i == 2:
+            continue
+        if action_arr[i] > cur_max:
             res.action = i
     if res.action == 0:
         res.param1 = action_arr[4]
@@ -52,9 +51,9 @@ def calculate_reward(state1, state2, game_status, team_size=1, opponent_size=0):
     goal_dist1 = []
     goal_dist2 = []
     feature_size = 58 + 8 * (team_size - 1) + opponent_size * 8
-    for i in range(team_size):
-        ball_dist1.append(1.0 - state1[53 + i * feature_size])
-        ball_dist2.append(1.0 - state2[53 + i * feature_size])
+    for i in xrange(team_size):
+        ball_dist1.append(1.0 - state1[53])
+        ball_dist2.append(1.0 - state2[53])
         goal_dist1.append(1.0 - state1[15 + i * feature_size])
         goal_dist2.append(1.0 - state2[15 + i * feature_size])
 
@@ -99,6 +98,9 @@ def calculate_reward(state1, state2, game_status, team_size=1, opponent_size=0):
         goal_reward = 10
     if able_to_kick2 == 1 and able_to_kick1 == -1:
         kick_reward = 5
+    ball_dist_reward = ball_dist2[0] - ball_dist1[0]
 
-    # temp hack of reward
-    return ball_dist2[0] - ball_dist1[0] + kick_reward + 3 * (ball_dist_goal2 - ball_dist_goal1) + goal_reward
+    # print(str(ball_dist1[0])+','+str(ball_dist2[0]) + ' Ball dist Reward: '+str(ball_dist_reward))
+    res = ball_dist_reward + 3 * (ball_dist_goal1-ball_dist_goal2) + kick_reward + goal_reward
+
+    return res

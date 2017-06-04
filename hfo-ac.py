@@ -19,23 +19,27 @@ path = "./hfo-ac/"  # The path to save our model to.
 if not os.path.exists(path):
     os.makedirs(path)
 
-batch_size = 300  # batch size for training
+batch_size = 64  # batch size for training
 y = .99  # Discount factor on the target Q-values
 startE = 1  # Starting chance of random action
-endE = 0.05  # Final chance of random action
+endE = 0.1  # Final chance of random action
+evaluate_e = 0  # Epsilon used in evaluation
 discount_factor = 0.99
 annealing_steps = 10000.  # How many steps of training to reduce startE to endE.
 num_episodes = 10000  # How many episodes of game environment to train network with.
-pre_train_steps = 10000  # How many steps of random actions before training begins.
+pre_train_steps = 1000  # How many steps of random actions before training begins.
 num_players = 1
 num_opponents = 0
 tau = 0.001  # Tau value used in target network update
 num_features = (58 + (num_players - 1) * 8 + num_opponents * 8) * num_players
 step_counter = 0
-load_model = False  # Load the model
+load_model = True  # Load the model
 train = True
 num_games = 0
-e = startE
+if train:
+    e = startE
+else:
+    e = evaluate_e
 stepDrop = (startE - endE) / annealing_steps
 
 tf.reset_default_graph()
@@ -48,14 +52,10 @@ with tf.Session() as sess:
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
     # init model by creating new model or loading
-    if load_model:
-        saver.restore(sess, path)
-        print 'session restored'
-    else:
-        sess.run(init)
+    sess.run(init)
     # activate HFO agent(s)
     # players = []
-    print("Now we load the weight")
+    print("Loading the weights")
     if load_model:
         try:
             actor.model.load_weights("actormodel.h5")
@@ -66,7 +66,7 @@ with tf.Session() as sess:
         except:
             print("Cannot find the weight")
 
-    for i in range(num_players):
+    for i in xrange(num_players):
         hfo = HFOEnvironment()
         hfo.connectToServer(LOW_LEVEL_FEATURE_SET,
                             '/Users/eclipse/HFO/bin/teams/base/config/formations-dt', 6000,
@@ -78,7 +78,7 @@ with tf.Session() as sess:
         episode_lengths=np.zeros(num_episodes),
         episode_rewards=np.zeros(num_episodes))
 
-    for episode in range(10000):
+    for episode in xrange(10000):
         episode_total_reward = 0
         game_status = IN_GAME
         num_games += 1
@@ -98,20 +98,20 @@ with tf.Session() as sess:
                     action_arr[4] = candidate_action.param1
                     candidate_action.param2 = random.uniform(-180, 180)
                     action_arr[5] = candidate_action.param2
-                    action_arr[0] = action_arr[candidate_action.action]+1
+                    action_arr[0] = action_arr[candidate_action.action] + 1
                 elif new_candidate_action == 3:
                     candidate_action.param1 = random.uniform(0, 100)
                     action_arr[8] = candidate_action.param1
                     candidate_action.param2 = random.uniform(-180, 180)
                     action_arr[9] = candidate_action.param2
-                    action_arr[3] = action_arr[candidate_action.action]+1
+                    action_arr[3] = action_arr[candidate_action.action] + 1
                 else:
                     candidate_action.param1 = random.uniform(-180, 180)
                     action_arr[6] = candidate_action.param1
                     candidate_action.param2 = 0
-                    action_arr[1] = action_arr[candidate_action.action]+1
+                    action_arr[1] = action_arr[candidate_action.action] + 1
                 candidate_action.action = new_candidate_action
-            if e >= endE:
+            if train and e >= endE:
                 e -= stepDrop
             # Take an action and get the current game status
             utils.take_action(hfo, candidate_action)
@@ -122,9 +122,8 @@ with tf.Session() as sess:
             done = game_status != IN_GAME
             stats.episode_rewards[episode] += reward
             stats.episode_lengths[episode] = num_games
-            '''
-            Fill buffer with record
-            '''
+
+            # Fill buffer with record
             exp_buffer.add(
                 utils.Experience(prev_state=state, action=action_arr, cur_state=new_state, reward=reward, done=done))
             print("exp size: " + str(exp_buffer.cur_size))
@@ -140,7 +139,7 @@ with tf.Session() as sess:
                 y_t = np.asarray([cur_exp.reward for cur_exp in cur_experience_batch])
 
                 target_q_values = critic.target_model.predict([cur_states, actor.target_model.predict(cur_states)])
-                for k in range(batch_size):
+                for k in xrange(batch_size):
                     if dones[k]:
                         y_t[k] = rewards[k]
                     else:
@@ -160,10 +159,10 @@ with tf.Session() as sess:
 
         # Check the outcome of the episode
         total_reward += episode_total_reward
-        print('Episode %d ended with %s' % (episode, hfo.statusToString(game_status)))
-        print("Episodic TOTAL REWARD @ " + str(episode) + "-th Episode  : " + str(episode_total_reward))
+        print('Episode %d ended with %s' % (episode + 1, hfo.statusToString(game_status)))
+        print("Episodic TOTAL REWARD @ " + str(episode + 1) + "-th Episode  : " + str(episode_total_reward))
         print("Total REWARD: " + str(total_reward))
-        if np.mod(episode, 5) == 0:
+        if np.mod(episode, 10) == 0:
             save_path = saver.save(sess, path)
             print("Model saved in file: %s" % save_path)
             actor.model.save_weights("actormodel.h5", overwrite=True)
