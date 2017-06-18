@@ -4,7 +4,6 @@
 # Before running this program, first Start HFO server:
 # $> ./bin/HFO --offense-agents 1
 
-import itertools
 from EXPBuffer import ExpBuffer
 from hfo import *
 
@@ -19,7 +18,7 @@ path = "./hfo-ac/"  # The path to save our model to.
 if not os.path.exists(path):
     os.makedirs(path)
 
-batch_size = 64  # batch size for training
+batch_size = 32  # batch size for training
 y = .99  # Discount factor on the target Q-values
 startE = 1  # Starting chance of random action
 endE = 0.1  # Final chance of random action
@@ -33,7 +32,7 @@ num_opponents = 0
 tau = 0.001  # Tau value used in target network update
 num_features = (58 + (num_players - 1) * 8 + num_opponents * 8) * num_players
 step_counter = 0
-load_model = True  # Load the model
+load_model = False  # Load the model
 train = True
 num_games = 0
 if train:
@@ -49,10 +48,7 @@ with tf.Session() as sess:
     actor = ActorNet(team_size=num_players, enemy_size=num_opponents, sess=sess, tau=tau)
     critic = CriticNet(team_size=num_players, enemy_size=num_opponents, tau=tau, sess=sess)
 
-    init = tf.global_variables_initializer()
-    saver = tf.train.Saver()
     # init model by creating new model or loading
-    sess.run(init)
     # activate HFO agent(s)
     # players = []
     print("Loading the weights")
@@ -90,6 +86,7 @@ with tf.Session() as sess:
             candidate_action = utils.get_action(action_arr)
             dice = random.uniform(0, 1)
             if dice < e:
+                print "Random action is taken for exploration"
                 new_candidate_action = random.randint(0, 3)
                 while new_candidate_action == 2:
                     new_candidate_action = random.randint(0, 3)
@@ -98,18 +95,27 @@ with tf.Session() as sess:
                     action_arr[4] = candidate_action.param1
                     candidate_action.param2 = random.uniform(-180, 180)
                     action_arr[5] = candidate_action.param2
-                    action_arr[0] = action_arr[candidate_action.action] + 1
+                    action_arr[0] = 1
+                    action_arr[1] = 0
+                    action_arr[2] = 0
+                    action_arr[3] = 0
                 elif new_candidate_action == 3:
                     candidate_action.param1 = random.uniform(0, 100)
                     action_arr[8] = candidate_action.param1
                     candidate_action.param2 = random.uniform(-180, 180)
                     action_arr[9] = candidate_action.param2
-                    action_arr[3] = action_arr[candidate_action.action] + 1
+                    action_arr[3] = 1
+                    action_arr[0] = 0
+                    action_arr[1] = 0
+                    action_arr[2] = 0
                 else:
                     candidate_action.param1 = random.uniform(-180, 180)
                     action_arr[6] = candidate_action.param1
                     candidate_action.param2 = 0
-                    action_arr[1] = action_arr[candidate_action.action] + 1
+                    action_arr[1] = 1
+                    action_arr[0] = 0
+                    action_arr[2] = 0
+                    action_arr[3] = 0
                 candidate_action.action = new_candidate_action
             if train and e >= endE:
                 e -= stepDrop
@@ -145,7 +151,7 @@ with tf.Session() as sess:
                     else:
                         y_t[k] = rewards[k] + discount_factor * target_q_values[k]
 
-                critic.model.train_on_batch([prev_states, actions], y_t)
+                loss += critic.model.train_on_batch([prev_states, actions], y_t)
                 a_for_grad = actor.model.predict(prev_states)
                 grads = critic.gradients(prev_states, a_for_grad)
                 actor.update(prev_states, grads)
@@ -155,7 +161,7 @@ with tf.Session() as sess:
             step_counter += 1
             episode_total_reward += reward
 
-            print("Episode", i, "Step", step_counter, "Reward", reward)
+            print("Episode", i, "Step", step_counter, "Reward", reward,"Loss", loss)
 
         # Check the outcome of the episode
         total_reward += episode_total_reward
@@ -163,8 +169,6 @@ with tf.Session() as sess:
         print("Episodic TOTAL REWARD @ " + str(episode + 1) + "-th Episode  : " + str(episode_total_reward))
         print("Total REWARD: " + str(total_reward))
         if np.mod(episode, 10) == 0:
-            save_path = saver.save(sess, path)
-            print("Model saved in file: %s" % save_path)
             actor.model.save_weights("actormodel.h5", overwrite=True)
             with open("actormodel.json", "w") as outfile:
                 json.dump(actor.model.to_json(), outfile)

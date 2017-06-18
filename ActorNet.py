@@ -25,9 +25,10 @@ class ActorNet:
         self.target_model, self.target_weights, self.target_state = self.create_actor_network(self.input_size)
 
         self.action_gradient = tf.placeholder(tf.float32, [None, 10])
-        self.params_grad = tf.gradients(self.model.output, self.weights, self.action_gradient)
+        self.params_grad = tf.gradients(self.model.output, self.weights, -self.action_gradient)
         grads = zip(self.params_grad, self.weights)
         self.optimize = tf.train.AdamOptimizer(learning_rate).apply_gradients(grads)
+        self.sess.run(tf.global_variables_initializer())
 
     def target_train(self):
         actor_weights = self.model.get_weights()

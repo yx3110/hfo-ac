@@ -6,7 +6,7 @@ from keras import layers
 from keras.engine import Model
 from keras.layers import LeakyReLU, initializers
 from keras.layers.core import Dense
-from keras.optimizers import Adam
+from keras.optimizers import Nadam
 
 max_turn_angle = 180
 min_turn_angle = -180
@@ -26,17 +26,17 @@ def bound(grad, param, max, min):
 def bound_grads(cur_grads, cur_actions, index):
 
     if index == 4:
-        cur_grads[4] = bound(cur_grads[4], cur_actions[index], max_power, min_power)
+        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_power, min_power)
     elif index == 5:
-        cur_grads[5] = bound(cur_grads[5], cur_actions[index], max_turn_angle, min_turn_angle)
+        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_turn_angle, min_turn_angle)
     elif index == 6:
-        cur_grads[6] = bound(cur_grads[6], cur_actions[index], max_turn_angle, min_turn_angle)
+        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_turn_angle, min_turn_angle)
     elif index == 7:
-        cur_grads[7] = bound(cur_grads[7], cur_actions[index], max_turn_angle, min_turn_angle)
+        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_turn_angle, min_turn_angle)
     elif index == 8:
-        cur_grads[8] = bound(cur_grads[8], cur_actions[index], max_power, min_power)
+        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_power, min_power)
     elif index == 9:
-        cur_grads[9] = bound(cur_grads[9], cur_actions[index], max_turn_angle, min_turn_angle)
+        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_turn_angle, min_turn_angle)
 
 
 class CriticNet:
@@ -51,12 +51,14 @@ class CriticNet:
         self.model, self.action, self.state = self.create_critic_network(self.input_size, 10)
         self.target_model, self.target_action, self.target_state = self.create_critic_network(self.input_size, 10)
         self.action_grads = tf.gradients(self.model.output, self.action)  # GRADIENTS for policy update
+        self.sess.run(tf.global_variables_initializer())
 
     def gradients(self, states, actions):
         grads = self.sess.run(self.action_grads, feed_dict={
             self.state: states,
             self.action: actions
         })[0]
+        #  print "grads:"+str(grads)+"len of grads:"+str(len(grads))+"len of actions:"+str(len(actions))
         for i in xrange(len(grads)):
             for j in xrange(len(grads[i])):
                 bound_grads(grads[i], actions[i], j)
@@ -85,6 +87,6 @@ class CriticNet:
         critic_out = Dense(1, activation='linear', kernel_initializer=initializers.he_normal(seed=0.01))(relu4)
 
         model = Model(input=[critic_input_state, critic_input_action], output=critic_out)
-        adam = Adam(lr=self.learning_rate)
+        adam = Nadam(lr=self.learning_rate)
         model.compile(loss='mse', optimizer=adam)
         return model, critic_input_action, critic_input_state

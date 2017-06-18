@@ -101,6 +101,8 @@ def calculate_reward(state1, state2, game_status, team_size=1, opponent_size=0):
     ball_dist_reward = ball_dist2[0] - ball_dist1[0]
 
     # print(str(ball_dist1[0])+','+str(ball_dist2[0]) + ' Ball dist Reward: '+str(ball_dist_reward))
-    res = ball_dist_reward + 3 * (ball_dist_goal1-ball_dist_goal2) + kick_reward + goal_reward
+    res = ball_dist_reward  # + 3 * (ball_dist_goal1-ball_dist_goal2) + goal_reward
+    if -0.00001 < res < 0.00001:
+        res = 0
 
     return res
