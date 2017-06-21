@@ -1,7 +1,7 @@
 import keras.backend as K
 import numpy as np
 import tensorflow as tf
-from keras import Input
+from keras.layers import Input
 from keras import layers
 from keras.engine import Model
 from keras.layers import LeakyReLU, initializers
@@ -16,11 +16,11 @@ max_value_bound = 1000
 min_value_bound = -1000
 
 
-def bound(grad, param, max, min):
+def bound(grad, param, max_val, min_val):
     if grad > 0:
-        return grad * np.divide(max - param, max - min)
+        return grad * np.divide(max_val - param, max_val - min_val)
     else:
-        return grad * np.divide(param - min, max - min)
+        return grad * np.divide(param - min_val, max_val - min_val)
 
 
 def bound_grads(cur_grads, cur_actions, index):

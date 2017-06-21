@@ -1,12 +1,11 @@
 import keras.backend as K
 import tensorflow as tf
-from keras import Input
+from keras.layers import Input
 from keras.engine import Model
 from keras.layers import LeakyReLU
 from keras.layers.core import Dense
 from keras import layers
 from keras import initializers
-
 
 max_turn_angle = 180
 min_turn_angle = -180
@@ -19,6 +18,7 @@ class ActorNet:
         self.sess = sess
         self.TAU = tau
         K.set_session(sess)
+
         self.input_size = (58 + (team_size - 1) * 8 + enemy_size * 8) * team_size
         self.relu_neg_slope = 0.01
         self.model, self.weights, self.state = self.create_actor_network(self.input_size)

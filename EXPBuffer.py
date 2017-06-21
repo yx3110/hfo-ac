@@ -2,7 +2,7 @@ import random
 
 
 class ExpBuffer:
-    def __init__(self, buffer_size=500000):
+    def __init__(self, buffer_size=100000):
         self.buffer = []
         self.buffer_size = buffer_size
         self.cur_size = 0
