@@ -20,11 +20,14 @@ class Action:
 def get_action(action_arr):
     res = Action()
     res.action = 0
-    cur_max = action_arr[0]
+
+    action_arr_copy = []
+    for i in xrange(len(action_arr)):
+        action_arr_copy.append(action_arr[i])
+    cur_max = action_arr_copy[0]
+    action_arr_copy[2] = -99999
     for i in xrange(0, 3):
-        if i == 2:
-            continue
-        if action_arr[i] > cur_max:
+        if action_arr_copy[i] >= cur_max:
             res.action = i
     if res.action == 0:
         res.param1 = action_arr[4]
@@ -102,7 +105,5 @@ def calculate_reward(state1, state2, game_status, team_size=1, opponent_size=0):
 
     # print(str(ball_dist1[0])+','+str(ball_dist2[0]) + ' Ball dist Reward: '+str(ball_dist_reward))
     res = ball_dist_reward  # + 3 * (ball_dist_goal1-ball_dist_goal2) + goal_reward
-    if -0.00001 < res < 0.00001:
-        res = 0
 
     return res

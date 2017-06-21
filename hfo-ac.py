@@ -41,7 +41,7 @@ if train:
     e = startE
 else:
     e = evaluate_e
-stepDrop = (startE - endE) / annealing_steps
+step_drop = (startE - endE) / annealing_steps
 
 if use_gpu:
     config = tf.ConfigProto()
@@ -95,7 +95,7 @@ for episode in xrange(10000):
         candidate_action = utils.get_action(action_arr)
         dice = random.uniform(0, 1)
         if dice < e:
-            print "Random action is taken for exploration"
+            print "Random action is taken for exploration, e = "+str(e)
             new_candidate_action = np.random.randint(0, 3)
             while new_candidate_action == 2:
                 new_candidate_action = np.random.randint(0, 3)
@@ -126,8 +126,8 @@ for episode in xrange(10000):
                 action_arr[2] = 0
                 action_arr[3] = 0
             candidate_action.action = new_candidate_action
-        if train and e >= endE:
-            e -= stepDrop
+        if train and e >= endE and exp_buffer.cur_size >= pre_train_steps:
+            e -= step_drop
         # Take an action and get the current game status
         utils.take_action(hfo, candidate_action)
         print action_arr
@@ -151,7 +151,7 @@ for episode in xrange(10000):
             rewards = np.asarray([cur_exp.reward for cur_exp in cur_experience_batch])
             dones = np.asarray([cur_exp.done for cur_exp in cur_experience_batch])
             new_states = np.asarray([cur_exp.cur_state for cur_exp in cur_experience_batch])
-            y_t = np.asarray([cur_exp.reward for cur_exp in cur_experience_batch])
+            y_t = np.zeros((states.shape[0], 1))
 
             target_q_values = critic.target_model.predict([new_states, actor.target_model.predict(new_states)])
 
