@@ -111,11 +111,10 @@ for episode in xrange(10000):
         game_status = hfo.step()
         state1 = hfo.getState()
         reward = utils.calculate_reward(state0, state1, game_status)
-        done = game_status != IN_GAME
 
         # Fill buffer with record
         exp_buffer.add(
-            utils.Experience(prev_state=state0, action=action_arr, cur_state=state1, reward=reward, done=done))
+            utils.Experience(prev_state=state0, action=action_arr, cur_state=state1, reward=reward, done=game_status))
         print("exp size: " + str(exp_buffer.cur_size))
         # Train the network
         if exp_buffer.cur_size >= pre_train_steps and train:
@@ -131,7 +130,7 @@ for episode in xrange(10000):
             target_q_values = critic.target_model.predict([new_states, actor.target_model.predict(new_states)])
 
             for k in xrange(batch_size):
-                if dones[k]:
+                if dones[k]!=IN_GAME:
                     y_t[k] = rewards[k]
                 else:
                     y_t[k] = rewards[k] + discount_factor * target_q_values[k]
