@@ -12,7 +12,6 @@ import Utils as utils
 import tensorflow as tf
 from CriticNet import CriticNet
 from ActorNet import ActorNet
-import random
 import json
 from keras import backend as K
 
@@ -72,13 +71,10 @@ if load_model:
     except:
         print("Cannot find the weight")
 
-for i in xrange(num_players):
-    hfo = HFOEnvironment()
-    hfo.connectToServer(LOW_LEVEL_FEATURE_SET,
-                        '/Users/eclipse/HFO/bin/teams/base/config/formations-dt', 6000,
-                        'localhost', 'base_left', False)
-    # players.append(hfo)
-
+hfo = HFOEnvironment()
+hfo.connectToServer(LOW_LEVEL_FEATURE_SET,
+                    '/Users/eclipse/HFO/bin/teams/base/config/formations-dt', 6000,
+                    'localhost', 'base_left', False)
 stats = plotting.EpisodeStats(
     episode_lengths=np.zeros(num_episodes),
     episode_rewards=np.zeros(num_episodes))
@@ -90,57 +86,40 @@ for episode in xrange(10000):
     while game_status == IN_GAME:
         loss = 0
         # Grab the state features from the environment
-        state = hfo.getState()
-        action_arr = actor.model.predict(np.reshape(state, [1, num_features]))[0]
+        state0 = hfo.getState()
+        action_arr = actor.model.predict(np.reshape(state0, [1, num_features]))[0]
         candidate_action = utils.get_action(action_arr)
-        dice = random.uniform(0, 1)
+        dice = np.random.uniform(0, 1)
         if dice < e:
             print "Random action is taken for exploration, e = "+str(e)
-            new_candidate_action = np.random.randint(0, 3)
-            while new_candidate_action == 2:
-                new_candidate_action = np.random.randint(0, 3)
-            if new_candidate_action == 0:
-                candidate_action.param1 = np.random.uniform(0, 100)
-                action_arr[4] = candidate_action.param1
-                candidate_action.param2 = np.random.uniform(-180, 180)
-                action_arr[5] = candidate_action.param2
-                action_arr[0] = 1
-                action_arr[1] = 0
-                action_arr[2] = 0
-                action_arr[3] = 0
-            elif new_candidate_action == 3:
-                candidate_action.param1 = np.random.uniform(0, 100)
-                action_arr[8] = candidate_action.param1
-                candidate_action.param2 = np.random.uniform(-180, 180)
-                action_arr[9] = candidate_action.param2
-                action_arr[3] = 1
-                action_arr[0] = 0
-                action_arr[1] = 0
-                action_arr[2] = 0
-            else:
-                candidate_action.param1 = np.random.uniform(-180, 180)
-                action_arr[6] = candidate_action.param1
-                candidate_action.param2 = 0
-                action_arr[1] = 1
-                action_arr[0] = 0
-                action_arr[2] = 0
-                action_arr[3] = 0
-            candidate_action.action = new_candidate_action
+            new_action_arr = []
+            for _ in xrange(4):
+                new_action_arr.append(np.random.uniform(0,1))
+            new_action_arr.append(np.random.uniform(-100, 100))
+            new_action_arr.append(np.random.uniform(-180, 180))
+            new_action_arr.append(np.random.uniform(-180, 180))
+            new_action_arr.append(np.random.uniform(-180, 180))
+            new_action_arr.append(np.random.uniform(-100, 100))
+            new_action_arr.append(np.random.uniform(-180, 180))
+            new_candidate_action = utils.get_action(new_action_arr)
+            utils.take_action(hfo,new_candidate_action)
+        else:
+            utils.take_action(hfo,candidate_action)
+
         if train and e >= endE and exp_buffer.cur_size >= pre_train_steps:
             e -= step_drop
         # Take an action and get the current game status
-        utils.take_action(hfo, candidate_action)
         print action_arr
         game_status = hfo.step()
-        new_state = hfo.getState()
-        reward = utils.calculate_reward(state, new_state, game_status)
+        state1 = hfo.getState()
+        reward = utils.calculate_reward(state0, state1, game_status)
         done = game_status != IN_GAME
         stats.episode_rewards[episode] += reward
         stats.episode_lengths[episode] = num_games
 
         # Fill buffer with record
         exp_buffer.add(
-            utils.Experience(prev_state=state, action=action_arr, cur_state=new_state, reward=reward, done=done))
+            utils.Experience(prev_state=state0, action=action_arr, cur_state=state1, reward=reward, done=done))
         print("exp size: " + str(exp_buffer.cur_size))
         # Train the network
         if exp_buffer.cur_size >= pre_train_steps and train:
@@ -171,7 +150,7 @@ for episode in xrange(10000):
         step_counter += 1
         episode_total_reward += reward
 
-        print("Episode", i, "Step", step_counter, "Reward", reward, "Loss", loss)
+        print("Episode", episode, "Step", step_counter, "Reward", reward, "Loss", loss)
 
     # Check the outcome of the episode
     total_reward += episode_total_reward

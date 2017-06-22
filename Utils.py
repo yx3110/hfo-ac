@@ -48,22 +48,24 @@ def take_action(env, action):
         env.act(action.action, action.param1)
 
 
-def calculate_reward(state1, state2, game_status, team_size=1, opponent_size=0):
+def calculate_reward(state0, state1, game_status, team_size=1, opponent_size=0):
     ball_dist1 = []
     ball_dist2 = []
     goal_dist1 = []
     goal_dist2 = []
     feature_size = 58 + 8 * (team_size - 1) + opponent_size * 8
+    ball_proxi0=state0[53]
+    ball_proxi1 = state1[53]
     for i in xrange(team_size):
-        ball_dist1.append(1.0 - state1[53])
-        ball_dist2.append(1.0 - state2[53])
-        goal_dist1.append(1.0 - state1[15 + i * feature_size])
-        goal_dist2.append(1.0 - state2[15 + i * feature_size])
+        ball_dist1.append(1.0 - state0[53])
+        ball_dist2.append(1.0 - state1[53])
+        goal_dist1.append(1.0 - state0[15 + i * feature_size])
+        goal_dist2.append(1.0 - state1[15 + i * feature_size])
 
-    ball_ang_sin_rad1 = state1[51]
-    ball_ang_sin_rad2 = state2[51]
-    ball_ang_cos_rad1 = state1[52]
-    ball_ang_cos_rad2 = state2[52]
+    ball_ang_sin_rad1 = state0[51]
+    ball_ang_sin_rad2 = state1[51]
+    ball_ang_cos_rad1 = state0[52]
+    ball_ang_cos_rad2 = state1[52]
 
     ball_ang_rad1 = np.arccos(ball_ang_cos_rad1)
     ball_ang_rad2 = np.arccos(ball_ang_cos_rad2)
@@ -72,10 +74,10 @@ def calculate_reward(state1, state2, game_status, team_size=1, opponent_size=0):
     if ball_ang_sin_rad2 < 0:
         ball_ang_rad2 *= -1.
 
-    goal_ang_sin_rad1 = state1[13]
-    goal_ang_sin_rad2 = state2[13]
-    goal_ang_cos_rad1 = state1[14]
-    goal_ang_cos_rad2 = state2[14]
+    goal_ang_sin_rad1 = state0[13]
+    goal_ang_sin_rad2 = state1[13]
+    goal_ang_cos_rad1 = state0[14]
+    goal_ang_cos_rad2 = state1[14]
 
     goal_ang_rad1 = np.arccos(goal_ang_cos_rad1)
     goal_ang_rad2 = np.arccos(goal_ang_cos_rad2)
@@ -93,17 +95,17 @@ def calculate_reward(state1, state2, game_status, team_size=1, opponent_size=0):
     ball_dist_goal2 = np.sqrt(
         ball_dist2[0] * ball_dist2[0] + goal_dist2[0] * goal_dist2[0] - 2. * ball_dist2[0] * goal_dist2[0] * np.cos(
             alpha2))
-    able_to_kick1 = state1[5]
-    able_to_kick2 = state2[5]
+    able_to_kick2 = state1[5]
+    able_to_kick1 = state0[5]
     kick_reward = 0
     goal_reward = 0
     if game_status == GOAL:
         goal_reward = 10
-    if able_to_kick2 == 1 and able_to_kick1 == -1:
+    if able_to_kick2 == 1 and able_to_kick1 ==-1:
         kick_reward = 5
-    ball_dist_reward = ball_dist2[0] - ball_dist1[0]
+    ball_dist_reward = ball_proxi1-ball_proxi0
 
-    # print(str(ball_dist1[0])+','+str(ball_dist2[0]) + ' Ball dist Reward: '+str(ball_dist_reward))
-    res = ball_dist_reward  # + 3 * (ball_dist_goal1-ball_dist_goal2) + goal_reward
+    print(str(ball_dist1[0]) + ',' + str(ball_dist2[0]) + ' Ball dist Reward: ' + str(ball_dist_reward))
+    res = ball_dist_reward #+ 3 * (ball_dist_goal1 - ball_dist_goal2) + goal_reward + kick_reward
 
     return res

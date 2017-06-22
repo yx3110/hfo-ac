@@ -11,9 +11,7 @@ from keras.optimizers import Nadam
 max_turn_angle = 180
 min_turn_angle = -180
 max_power = 100
-min_power = 0
-max_value_bound = 1000
-min_value_bound = -1000
+min_power = -100
 
 
 def bound(grad, param, max_val, min_val):
@@ -73,20 +71,21 @@ class CriticNet:
 
     def create_critic_network(self, state_size, action_dim):
         print("Building critic model")
-        critic_input_action = Input(shape=[action_dim])
-        critic_input_state = Input(shape=[state_size])
-        critic_input_final = layers.concatenate([critic_input_state, critic_input_action], axis=1)
-        dense1 = Dense(1024, activation='linear', kernel_initializer=initializers.glorot_uniform())(critic_input_final)
-        relu1 = LeakyReLU(alpha=self.relu_neg_slope)(dense1)
-        dense2 = Dense(512, activation='linear', kernel_initializer=initializers.glorot_uniform())(relu1)
-        relu2 = LeakyReLU(alpha=self.relu_neg_slope)(dense2)
-        dense3 = Dense(256, activation='linear', kernel_initializer=initializers.glorot_uniform())(relu2)
-        relu3 = LeakyReLU(alpha=self.relu_neg_slope)(dense3)
-        dense4 = Dense(128, activation='linear', kernel_initializer=initializers.glorot_uniform())(relu3)
-        relu4 = LeakyReLU(alpha=self.relu_neg_slope)(dense4)
-        critic_out = Dense(1, activation='linear', kernel_initializer=initializers.glorot_uniform())(relu4)
+        critic_input_action = Input(shape=[action_dim], name='critic_ain')
+        critic_input_state = Input(shape=[state_size], name='critic_sin')
+        critic_input_final = layers.concatenate([critic_input_state, critic_input_action], axis=1, name='critic_in')
+        dense1 = Dense(1024, kernel_initializer=initializers.glorot_normal(),bias_initializer=initializers.glorot_normal(), name='critic_d1')(critic_input_final)
+        relu1 = LeakyReLU(alpha=self.relu_neg_slope, name='critic_re1')(dense1)
+        dense2 = Dense(512, kernel_initializer=initializers.glorot_normal(), bias_initializer=initializers.glorot_normal(), name='critic_d2')(relu1)
+        relu2 = LeakyReLU(alpha=self.relu_neg_slope, name='critic_re2')(dense2)
+        dense3 = Dense(256, kernel_initializer=initializers.glorot_normal(), bias_initializer=initializers.glorot_normal(), name='critic_d3')(relu2)
+        relu3 = LeakyReLU(alpha=self.relu_neg_slope, name='critic_re3')(dense3)
+        dense4 = Dense(128, kernel_initializer=initializers.glorot_normal(), bias_initializer=initializers.glorot_normal(), name='critic_d4')(relu3)
+        relu4 = LeakyReLU(alpha=self.relu_neg_slope, name='critic_re4')(dense4)
+        critic_out = Dense(1, kernel_initializer=initializers.glorot_normal(),bias_initializer=initializers.glorot_normal())(relu4)
 
-        model = Model(input=[critic_input_state, critic_input_action], output=critic_out)
+        model = Model(inputs=[critic_input_state, critic_input_action], outputs=critic_out)
         adam = Nadam(lr=self.learning_rate)
         model.compile(loss='mse', optimizer=adam)
+        model.summary()
         return model, critic_input_action, critic_input_state
