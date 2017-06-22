@@ -15,8 +15,7 @@ from ActorNet import ActorNet
 import json
 from keras import backend as K
 
-
-np.random.seed(1337)
+np.random.seed(2313)
 
 batch_size = 32  # batch size for training
 y = .99  # Discount factor on the target Q-values
@@ -35,7 +34,6 @@ step_counter = 0
 load_model = False  # Load the model
 use_gpu = False
 train = True
-num_games = 0
 if train:
     e = startE
 else:
@@ -75,47 +73,45 @@ hfo = HFOEnvironment()
 hfo.connectToServer(LOW_LEVEL_FEATURE_SET,
                     '/Users/eclipse/HFO/bin/teams/base/config/formations-dt', 6000,
                     'localhost', 'base_left', False)
-stats = plotting.EpisodeStats(
-    episode_lengths=np.zeros(num_episodes),
-    episode_rewards=np.zeros(num_episodes))
+
 
 for episode in xrange(10000):
     episode_total_reward = 0
     game_status = IN_GAME
-    num_games += 1
     while game_status == IN_GAME:
         loss = 0
         # Grab the state features from the environment
         state0 = hfo.getState()
+        print 'position valid:'+str(state0[0])
         action_arr = actor.model.predict(np.reshape(state0, [1, num_features]))[0]
-        candidate_action = utils.get_action(action_arr)
         dice = np.random.uniform(0, 1)
         if dice < e:
             print "Random action is taken for exploration, e = "+str(e)
             new_action_arr = []
-            for _ in xrange(4):
-                new_action_arr.append(np.random.uniform(0,1))
+
+            new_action_arr.append(np.random.uniform(0,1))
+            new_action_arr.append(np.random.uniform(0, 1))
+            new_action_arr.append(np.random.uniform(0, 1))
+            new_action_arr.append(np.random.uniform(0, 1))
+
             new_action_arr.append(np.random.uniform(-100, 100))
             new_action_arr.append(np.random.uniform(-180, 180))
             new_action_arr.append(np.random.uniform(-180, 180))
             new_action_arr.append(np.random.uniform(-180, 180))
             new_action_arr.append(np.random.uniform(-100, 100))
             new_action_arr.append(np.random.uniform(-180, 180))
-            new_candidate_action = utils.get_action(new_action_arr)
-            utils.take_action(hfo,new_candidate_action)
-        else:
-            utils.take_action(hfo,candidate_action)
+            action_arr = new_action_arr
 
         if train and e >= endE and exp_buffer.cur_size >= pre_train_steps:
             e -= step_drop
         # Take an action and get the current game status
+        utils.take_action(hfo,utils.get_action(action_arr))
+
         print action_arr
         game_status = hfo.step()
         state1 = hfo.getState()
         reward = utils.calculate_reward(state0, state1, game_status)
         done = game_status != IN_GAME
-        stats.episode_rewards[episode] += reward
-        stats.episode_lengths[episode] = num_games
 
         # Fill buffer with record
         exp_buffer.add(

@@ -104,8 +104,10 @@ def calculate_reward(state0, state1, game_status, team_size=1, opponent_size=0):
     if able_to_kick2 == 1 and able_to_kick1 ==-1:
         kick_reward = 5
     ball_dist_reward = ball_proxi1-ball_proxi0
-
+    invalid_penalty =0
+    if state1[0]!=1.0:
+        invalid_penalty=-5
     print(str(ball_dist1[0]) + ',' + str(ball_dist2[0]) + ' Ball dist Reward: ' + str(ball_dist_reward))
-    res = ball_dist_reward #+ 3 * (ball_dist_goal1 - ball_dist_goal2) + goal_reward + kick_reward
+    res = invalid_penalty+ball_dist_reward #+ 3 * (ball_dist_goal1 - ball_dist_goal2) + goal_reward + kick_reward
 
     return res
