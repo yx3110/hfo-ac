@@ -73,9 +73,10 @@ hfo.connectToServer(LOW_LEVEL_FEATURE_SET,
                     '/Users/eclipse/HFO/bin/teams/base/config/formations-dt', 6000,
                     'localhost', 'base_left', False)
 
-for episode in xrange(num_episodes):
-    episode_total_reward = 0
-    game_info = GameInfo(0)
+for episode in range(num_episodes):
+    game_info = GameInfo(1)
+    hfo.act(DASH, 0, 0);
+    game_info.update(hfo);
     while game_info.status == IN_GAME:
         loss = 0
         # Grab the state features from the environment
@@ -88,18 +89,14 @@ for episode in xrange(num_episodes):
                               np.random.uniform(0, 1), np.random.uniform(-100, 100), np.random.uniform(-180, 180),
                               np.random.uniform(-180, 180), np.random.uniform(-180, 180), np.random.uniform(-100, 100),
                               np.random.uniform(-180, 180)]
-
             action_arr = new_action_arr
-
         if train and e >= endE and exp_buffer.cur_size >= pre_train_steps:
             e -= step_drop
         # Take an action and get the current game status
         take_action(hfo, get_action(action_arr))
-
         print action_arr
         game_info.update(hfo)
         state1 = hfo.getState()
-        print 'position valid:' + str(state1[0])
         reward = game_info.get_reward()
 
         # Fill buffer with record
@@ -132,14 +129,14 @@ for episode in xrange(num_episodes):
                 critic.target_train()
 
         step_counter += 1
-        episode_total_reward += reward
+        game_info.total_reward += reward
 
-        print("Episode", episode, "Step", step_counter, "Reward", reward, "Loss", loss)
+        print("Episode", episode+1, "Step", step_counter, "Reward", reward, "Loss", loss)
 
     # Check the outcome of the episode
-    total_reward += episode_total_reward
+    total_reward += game_info.total_reward
     print('Episode %d ended with %s' % (episode + 1, hfo.statusToString(game_info.status)))
-    print("Episodic TOTAL REWARD @ " + str(episode + 1) + "-th Episode  : " + str(episode_total_reward))
+    print("Episodic TOTAL REWARD @ " + str(episode + 1) + "-th Episode  : " + str(game_info.total_reward))
     print("Total REWARD: " + str(total_reward))
     if np.mod(episode, 10) == 0:
         actor.model.save_weights("actormodel.h5", overwrite=True)
@@ -155,3 +152,4 @@ for episode in xrange(num_episodes):
     if game_info.status == SERVER_DOWN:
         hfo.act(QUIT)
         break
+    episode += 1

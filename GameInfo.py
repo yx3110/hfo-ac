@@ -4,7 +4,7 @@ kPassVelThreshold = -.5
 
 
 class GameInfo:
-    def __init__(self,unum):
+    def __init__(self, unum):
         self.got_kickable_reward = False
         self.prev_ball_prox = 0
         self.ball_prox_delta = 0
@@ -23,8 +23,8 @@ class GameInfo:
         self.pass_active = False
 
     def update(self, hfo):
-        status = hfo.step()
-        if status != IN_GAME:
+        self.status = hfo.step()
+        if self.status != IN_GAME:
             self.episode_over = True
         cur_state = hfo.getState()
         ball_prox = cur_state[53]
@@ -55,7 +55,6 @@ class GameInfo:
             self.ball_prox_delta = ball_prox - self.prev_ball_prox
             self.kickable_delta = kickable - self.prev_kickable
             self.ball_dist_goal_delta = ball_dist_goal - self.prev_ball_dist_goal
-
         self.prev_ball_prox = ball_prox
         self.prev_kickable = kickable
         self.prev_ball_dist_goal = ball_dist_goal
@@ -65,7 +64,6 @@ class GameInfo:
             self.ball_dist_goal_delta = 0
         self.prev_player_on_ball = self.player_on_ball
         self.player_on_ball = hfo.playerOnBall()
-
         self.steps += 1
 
     def get_reward(self):
@@ -76,14 +74,14 @@ class GameInfo:
         EOT_reward = self.EOT_reward()
         res += EOT_reward
         self.extrinsic_reward = EOT_reward
-        self.total_reward == res
+        self.total_reward = res
         return res
 
     def move_to_ball_reward(self):
         reward = 0
         if self.player_on_ball.unum < 0 or self.player_on_ball.unum == self.our_unum:
             reward += self.ball_prox_delta
-        if self.kickable_delta >= 1 and not self.got_kickable_reward:
+        if self.kickable_delta >= 1 and (not self.got_kickable_reward):
             reward += 1.0
             self.got_kickable_reward = True
         return reward
