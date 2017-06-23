@@ -1,10 +1,31 @@
 from hfo import *
+import numpy as np
+
+
+class ExpBuffer:
+    def __init__(self, buffer_size=100000):
+        self.buffer = []
+        self.buffer_size = buffer_size
+        self.cur_size = 0
+
+    def add(self, experience):
+        if self.cur_size >= self.buffer_size:
+            self.buffer.pop(0)
+            self.cur_size -= 1
+        self.buffer.append(experience)
+        self.cur_size += 1
+
+    def sample(self, size):
+        res = []
+        for i in range(size):
+            res.append(self.buffer[np.random.randint(0, self.cur_size - 1)])
+        return res
 
 
 class Experience:
-    def __init__(self, prev_state, cur_state, action, reward, done):
-        self.prev_state = prev_state
-        self.cur_state = cur_state
+    def __init__(self, state0, state1, action, reward, done):
+        self.state0 = state0
+        self.state1 = state1
         self.action = action
         self.reward = reward
         self.done = done
@@ -46,68 +67,3 @@ def take_action(env, action):
         env.act(action.action, action.param1, action.param2)
     else:
         env.act(action.action, action.param1)
-
-
-def calculate_reward(state0, state1, game_status, team_size=1, opponent_size=0):
-    ball_dist1 = []
-    ball_dist2 = []
-    goal_dist1 = []
-    goal_dist2 = []
-    feature_size = 58 + 8 * (team_size - 1) + opponent_size * 8
-    ball_proxi0=state0[53]
-    ball_proxi1 = state1[53]
-    for i in xrange(team_size):
-        ball_dist1.append(1.0 - state0[53])
-        ball_dist2.append(1.0 - state1[53])
-        goal_dist1.append(1.0 - state0[15 + i * feature_size])
-        goal_dist2.append(1.0 - state1[15 + i * feature_size])
-
-    ball_ang_sin_rad1 = state0[51]
-    ball_ang_sin_rad2 = state1[51]
-    ball_ang_cos_rad1 = state0[52]
-    ball_ang_cos_rad2 = state1[52]
-
-    ball_ang_rad1 = np.arccos(ball_ang_cos_rad1)
-    ball_ang_rad2 = np.arccos(ball_ang_cos_rad2)
-    if ball_ang_sin_rad1 < 0:
-        ball_ang_rad1 *= -1.
-    if ball_ang_sin_rad2 < 0:
-        ball_ang_rad2 *= -1.
-
-    goal_ang_sin_rad1 = state0[13]
-    goal_ang_sin_rad2 = state1[13]
-    goal_ang_cos_rad1 = state0[14]
-    goal_ang_cos_rad2 = state1[14]
-
-    goal_ang_rad1 = np.arccos(goal_ang_cos_rad1)
-    goal_ang_rad2 = np.arccos(goal_ang_cos_rad2)
-    if goal_ang_sin_rad1 < 0:
-        goal_ang_rad1 *= -1.
-    if goal_ang_sin_rad2 < 0:
-        goal_ang_rad2 *= -1.
-
-    alpha1 = max(ball_ang_rad1, goal_ang_rad1) - min(ball_ang_rad1, goal_ang_rad1)
-    alpha2 = max(ball_ang_rad2, goal_ang_rad2) - min(ball_ang_rad2, goal_ang_rad2)
-
-    ball_dist_goal1 = np.sqrt(
-        ball_dist1[0] * ball_dist1[0] + goal_dist1[0] * goal_dist1[0] - 2. * ball_dist1[0] * goal_dist1[0] * np.cos(
-            alpha1))
-    ball_dist_goal2 = np.sqrt(
-        ball_dist2[0] * ball_dist2[0] + goal_dist2[0] * goal_dist2[0] - 2. * ball_dist2[0] * goal_dist2[0] * np.cos(
-            alpha2))
-    able_to_kick2 = state1[5]
-    able_to_kick1 = state0[5]
-    kick_reward = 0
-    goal_reward = 0
-    if game_status == GOAL:
-        goal_reward = 10
-    if able_to_kick2 == 1 and able_to_kick1 ==-1:
-        kick_reward = 5
-    ball_dist_reward = ball_proxi1-ball_proxi0
-    invalid_penalty =0
-    if state1[0]!=1.0:
-        invalid_penalty=-5
-    print(str(ball_dist1[0]) + ',' + str(ball_dist2[0]) + ' Ball dist Reward: ' + str(ball_dist_reward))
-    res = invalid_penalty+ball_dist_reward #+ 3 * (ball_dist_goal1 - ball_dist_goal2) + goal_reward + kick_reward
-
-    return res

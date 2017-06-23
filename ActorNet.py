@@ -48,21 +48,27 @@ class ActorNet:
     def create_actor_network(self, state_size):
         print("Building actor model")
         actor_input = Input(shape=[state_size], name='actor_in')
-        dense1 = Dense(1024, kernel_initializer=initializers.glorot_normal(),bias_initializer=initializers.glorot_normal(),  name='actor_d1')(
+        dense1 = Dense(1024, kernel_initializer=initializers.glorot_normal(),
+                       bias_initializer=initializers.glorot_normal(), name='actor_d1')(
             actor_input)
         relu1 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re1')(dense1)
-        dense2 = Dense(512, kernel_initializer=initializers.glorot_normal(), bias_initializer=initializers.glorot_normal(), name='actor_d2')(
+        dense2 = Dense(512, kernel_initializer=initializers.glorot_normal(),
+                       bias_initializer=initializers.glorot_normal(), name='actor_d2')(
             relu1)
         relu2 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re2')(dense2)
-        dense3 = Dense(256,kernel_initializer=initializers.glorot_normal(),bias_initializer=initializers.glorot_normal(),  name='actor_d3')(
+        dense3 = Dense(256, kernel_initializer=initializers.glorot_normal(),
+                       bias_initializer=initializers.glorot_normal(), name='actor_d3')(
             relu2)
         relu3 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re3')(dense3)
-        dense4 = Dense(128,kernel_initializer=initializers.glorot_normal(),bias_initializer=initializers.glorot_normal(),  name='actor_d4')(
+        dense4 = Dense(128, kernel_initializer=initializers.glorot_normal(),
+                       bias_initializer=initializers.glorot_normal(), name='actor_d4')(
             relu3)
         relu4 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re4')(dense4)
-        action_out = Dense(4, activation='softmax', kernel_initializer=initializers.glorot_normal(),bias_initializer=initializers.glorot_normal(),  name='actor_aout')(
+        action_out = Dense(4, activation='softmax', kernel_initializer=initializers.glorot_normal(),
+                           bias_initializer=initializers.glorot_normal(), name='actor_aout')(
             relu4)
-        param_out = Dense(6,kernel_initializer=initializers.glorot_normal(),bias_initializer=initializers.glorot_normal(),  name='actor_pout')(
+        param_out = Dense(6, kernel_initializer=initializers.glorot_normal(),
+                          bias_initializer=initializers.glorot_normal(), name='actor_pout')(
             relu4)
         actor_out = layers.concatenate([action_out, param_out], axis=1)
         model = Model(inputs=actor_input, outputs=actor_out)

@@ -4,16 +4,15 @@
 # Before running this program, first Start HFO server:
 # $> ./bin/HFO --offense-agents 1
 
-from EXPBuffer import ExpBuffer
-from hfo import *
-from lib import plotting
-
-import Utils as utils
-import tensorflow as tf
-from CriticNet import CriticNet
-from ActorNet import ActorNet
 import json
+
+import tensorflow as tf
 from keras import backend as K
+
+from ActorNet import ActorNet
+from CriticNet import CriticNet
+from GameInfo import GameInfo
+from Utils import *
 
 np.random.seed(2313)
 
@@ -52,7 +51,7 @@ total_reward = 0
 sess = tf.Session(config=config)
 
 K.set_session(sess)
-actor = ActorNet(team_size=num_players, enemy_size=num_opponents, sess=sess, tau=tau)
+actor = ActorNet(team_size=num_players, enemy_size=num_opponents, tau=tau, sess=sess)
 critic = CriticNet(team_size=num_players, enemy_size=num_opponents, tau=tau, sess=sess)
 
 # init model by creating new model or loading
@@ -74,71 +73,61 @@ hfo.connectToServer(LOW_LEVEL_FEATURE_SET,
                     '/Users/eclipse/HFO/bin/teams/base/config/formations-dt', 6000,
                     'localhost', 'base_left', False)
 
-
-for episode in xrange(10000):
+for episode in xrange(num_episodes):
     episode_total_reward = 0
-    game_status = IN_GAME
-    while game_status == IN_GAME:
+    game_info = GameInfo(0)
+    while game_info.status == IN_GAME:
         loss = 0
         # Grab the state features from the environment
         state0 = hfo.getState()
-        print 'position valid:'+str(state0[0])
         action_arr = actor.model.predict(np.reshape(state0, [1, num_features]))[0]
         dice = np.random.uniform(0, 1)
         if dice < e:
-            print "Random action is taken for exploration, e = "+str(e)
-            new_action_arr = []
+            print "Random action is taken for exploration, e = " + str(e)
+            new_action_arr = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1),
+                              np.random.uniform(0, 1), np.random.uniform(-100, 100), np.random.uniform(-180, 180),
+                              np.random.uniform(-180, 180), np.random.uniform(-180, 180), np.random.uniform(-100, 100),
+                              np.random.uniform(-180, 180)]
 
-            new_action_arr.append(np.random.uniform(0,1))
-            new_action_arr.append(np.random.uniform(0, 1))
-            new_action_arr.append(np.random.uniform(0, 1))
-            new_action_arr.append(np.random.uniform(0, 1))
-
-            new_action_arr.append(np.random.uniform(-100, 100))
-            new_action_arr.append(np.random.uniform(-180, 180))
-            new_action_arr.append(np.random.uniform(-180, 180))
-            new_action_arr.append(np.random.uniform(-180, 180))
-            new_action_arr.append(np.random.uniform(-100, 100))
-            new_action_arr.append(np.random.uniform(-180, 180))
             action_arr = new_action_arr
 
         if train and e >= endE and exp_buffer.cur_size >= pre_train_steps:
             e -= step_drop
         # Take an action and get the current game status
-        utils.take_action(hfo,utils.get_action(action_arr))
+        take_action(hfo, get_action(action_arr))
 
         print action_arr
-        game_status = hfo.step()
+        game_info.update(hfo)
         state1 = hfo.getState()
-        reward = utils.calculate_reward(state0, state1, game_status)
+        print 'position valid:' + str(state1[0])
+        reward = game_info.get_reward()
 
         # Fill buffer with record
         exp_buffer.add(
-            utils.Experience(prev_state=state0, action=action_arr, cur_state=state1, reward=reward, done=game_status))
-        print("exp size: " + str(exp_buffer.cur_size))
+            Experience(state0=state0, action=action_arr, state1=state1, reward=reward, done=game_info.episode_over))
         # Train the network
         if exp_buffer.cur_size >= pre_train_steps and train:
             # sample batch
             cur_experience_batch = exp_buffer.sample(batch_size)
-            states = np.asarray([cur_exp.prev_state for cur_exp in cur_experience_batch])
+            state0s = np.asarray([cur_exp.state0 for cur_exp in cur_experience_batch])
             actions = np.reshape(np.asarray([cur_exp.action for cur_exp in cur_experience_batch]), [batch_size, 10])
             rewards = np.asarray([cur_exp.reward for cur_exp in cur_experience_batch])
             dones = np.asarray([cur_exp.done for cur_exp in cur_experience_batch])
-            new_states = np.asarray([cur_exp.cur_state for cur_exp in cur_experience_batch])
-            y_t = np.zeros((states.shape[0], 1))
+            state1s = np.asarray([cur_exp.state1 for cur_exp in cur_experience_batch])
+            y_t = np.zeros((state0s.shape[0], 1))
 
-            target_q_values = critic.target_model.predict([new_states, actor.target_model.predict(new_states)])
+            target_q_values = critic.target_model.predict([state1s, actor.target_model.predict(state1s)])
 
             for k in xrange(batch_size):
-                if dones[k]!=IN_GAME:
+                if dones[k]:
                     y_t[k] = rewards[k]
                 else:
                     y_t[k] = rewards[k] + discount_factor * target_q_values[k]
             if train:
-                loss += critic.model.train_on_batch([states, actions], y_t)
-                a_for_grad = actor.model.predict(states)
-                grads = critic.gradients(states, a_for_grad)
-                actor.update(states, grads)
+                loss += critic.model.train_on_batch([state0s, actions], y_t)
+                a_for_grad = actor.model.predict(state0s)
+                grads = critic.gradients(state0s, a_for_grad)
+                actor.update(state0s, grads)
                 actor.target_train()
                 critic.target_train()
 
@@ -149,7 +138,7 @@ for episode in xrange(10000):
 
     # Check the outcome of the episode
     total_reward += episode_total_reward
-    print('Episode %d ended with %s' % (episode + 1, hfo.statusToString(game_status)))
+    print('Episode %d ended with %s' % (episode + 1, hfo.statusToString(game_info.status)))
     print("Episodic TOTAL REWARD @ " + str(episode + 1) + "-th Episode  : " + str(episode_total_reward))
     print("Total REWARD: " + str(total_reward))
     if np.mod(episode, 10) == 0:
@@ -163,6 +152,6 @@ for episode in xrange(10000):
 
     # Quit if the server goes down
 
-    if game_status == SERVER_DOWN:
+    if game_info.status == SERVER_DOWN:
         hfo.act(QUIT)
         break
