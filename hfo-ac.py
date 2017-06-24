@@ -45,7 +45,6 @@ if use_gpu:
 else:
     config = tf.ConfigProto()
 
-tf.reset_default_graph()
 exp_buffer = ExpBuffer()
 total_reward = 0
 sess = tf.Session(config=config)
@@ -87,11 +86,12 @@ for episode in range(num_episodes):
             print "Random action is taken for exploration, e = " + str(e)
             new_action_arr = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1),
                               np.random.uniform(0, 1), np.random.uniform(-100, 100), np.random.uniform(-180, 180),
-                              np.random.uniform(-180, 180), np.random.uniform(-180, 180), np.random.uniform(-100, 100),
+                              np.random.uniform(-180, 180), np.random.uniform(-180, 180), np.random.uniform(0, 100),
                               np.random.uniform(-180, 180)]
             action_arr = new_action_arr
         if train and e >= endE and exp_buffer.cur_size >= pre_train_steps:
             e -= step_drop
+
         # Take an action and get the current game status
         take_action(hfo, get_action(action_arr))
         print action_arr
@@ -129,15 +129,14 @@ for episode in range(num_episodes):
                 critic.target_train()
 
         step_counter += 1
-        game_info.total_reward += reward
 
-        print("Episode", episode+1, "Step", step_counter, "Reward", reward, "Loss", loss)
+        print("Episode", episode + 1, "Step", step_counter, "Reward", reward, "Loss", loss)
 
     # Check the outcome of the episode
     total_reward += game_info.total_reward
     print('Episode %d ended with %s' % (episode + 1, hfo.statusToString(game_info.status)))
     print("Episodic TOTAL REWARD @ " + str(episode + 1) + "-th Episode  : " + str(game_info.total_reward))
-    print("Total REWARD: " + str(total_reward))
+    print("Total REWARD: ", total_reward, "EOT Reward", game_info.extrinsic_reward)
     if np.mod(episode, 10) == 0:
         actor.model.save_weights("actormodel.h5", overwrite=True)
         with open("actormodel.json", "w") as outfile:
