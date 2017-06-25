@@ -84,8 +84,8 @@ for episode in range(num_episodes):
         dice = np.random.uniform(0, 1)
         if dice < e:
             print "Random action is taken for exploration, e = " + str(e)
-            new_action_arr = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1),
-                              np.random.uniform(0, 1), np.random.uniform(-100, 100), np.random.uniform(-180, 180),
+            new_action_arr = [np.random.uniform(-1, 1), np.random.uniform(-1, 1), np.random.uniform(-1, 1),
+                              np.random.uniform(-1, 1), np.random.uniform(-100, 100), np.random.uniform(-180, 180),
                               np.random.uniform(-180, 180), np.random.uniform(-180, 180), np.random.uniform(0, 100),
                               np.random.uniform(-180, 180)]
             action_arr = new_action_arr

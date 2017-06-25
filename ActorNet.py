@@ -64,7 +64,7 @@ class ActorNet:
                        bias_initializer=initializers.glorot_normal(), name='actor_d4')(
             relu3)
         relu4 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re4')(dense4)
-        action_out = Dense(4, activation='softmax', kernel_initializer=initializers.glorot_normal(),
+        action_out = Dense(4, kernel_initializer=initializers.glorot_normal(),
                            bias_initializer=initializers.glorot_normal(), name='actor_aout')(
             relu4)
         param_out = Dense(6, kernel_initializer=initializers.glorot_normal(),

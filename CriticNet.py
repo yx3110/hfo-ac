@@ -11,8 +11,9 @@ from keras.optimizers import Nadam
 max_turn_angle = 180
 min_turn_angle = -180
 max_power = 100
-dash_min_power = -100
-kick_min_power = 0
+min_power = 0
+max_act_val = 1
+min_act_val = -1
 
 
 def bound(grad, param, max_val, min_val):
@@ -23,17 +24,11 @@ def bound(grad, param, max_val, min_val):
 
 
 def bound_grads(cur_grads, cur_actions, index):
-    if index == 4:
-        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_power, dash_min_power)
-    elif index == 5:
-        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_turn_angle, min_turn_angle)
-    elif index == 6:
-        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_turn_angle, min_turn_angle)
-    elif index == 7:
-        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_turn_angle, min_turn_angle)
-    elif index == 8:
-        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_power, kick_min_power)
-    elif index == 9:
+    if 0 <= index < 4:
+        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_act_val, min_act_val)
+    if index == 4 or index == 8:
+        cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_power, min_power)
+    elif index == 5 or index == 6 or index == 7 or index == 9:
         cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_turn_angle, min_turn_angle)
 
 
