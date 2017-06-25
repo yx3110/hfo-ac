@@ -30,7 +30,7 @@ num_opponents = 0
 tau = 0.001  # Tau value used in target network update
 num_features = (58 + (num_players - 1) * 8 + num_opponents * 8) * num_players
 step_counter = 0
-load_model = False  # Load the model
+load_model = True  # Load the model
 use_gpu = False
 train = True
 if train:
@@ -82,7 +82,7 @@ for episode in range(num_episodes):
         state0 = hfo.getState()
         action_arr = actor.model.predict(np.reshape(state0, [1, num_features]))[0]
         dice = np.random.uniform(0, 1)
-        if dice < e:
+        if dice < e and train:
             print "Random action is taken for exploration, e = " + str(e)
             new_action_arr = [np.random.uniform(-1, 1), np.random.uniform(-1, 1), np.random.uniform(-1, 1),
                               np.random.uniform(-1, 1), np.random.uniform(-100, 100), np.random.uniform(-180, 180),
