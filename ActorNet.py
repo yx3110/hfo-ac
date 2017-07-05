@@ -71,6 +71,7 @@ class ActorNet:
                           bias_initializer=initializers.glorot_normal(), name='actor_pout')(
             relu4)
         actor_out = layers.concatenate([action_out, param_out], axis=1)
+        print 'here3'
         model = Model(inputs=actor_input, outputs=actor_out)
         adam = Nadam(lr=self.learning_rate)
         model.compile(loss='mse', optimizer=adam)
