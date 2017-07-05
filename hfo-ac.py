@@ -46,6 +46,7 @@ print 'here'
 exp_buffer = ExpBuffer()
 total_reward = 0
 sess = tf.Session(config=config)
+print 'here2'
 
 K.set_session(sess)
 actor = ActorNet(team_size=num_players, enemy_size=num_opponents, tau=tau, sess=sess)
