@@ -68,7 +68,7 @@ class hfoENV(Env):
     def _start_hfo_server(self, frames_per_trial=100,
                           untouched_time=100, offense_agents=1,
                           defense_agents=0, offense_npcs=0,
-                          defense_npcs=0, sync_mode=True, port=6000,
+                          defense_npcs=0, sync_mode=True, port=6001,
                           offense_on_ball=0, fullstate=True, seed=-1,
                           ball_x_min=0.0, ball_x_max=0.2,
                           verbose=False, log_game=False,
