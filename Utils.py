@@ -4,7 +4,6 @@ import time
 
 import hfo_py
 import signal
-from gym_soccer.envs.soccer_env import ACTION_LOOKUP
 from hfo import *
 import numpy as np
 from rl.core import Env
@@ -289,3 +288,12 @@ class GameInfo:
                 return 1
         else:
             return 0
+
+
+ACTION_LOOKUP = {
+    0: hfo_py.DASH,
+    1: hfo_py.TURN,
+    2: hfo_py.KICK,
+    3: hfo_py.TACKLE,  # Used on defense to slide tackle the ball
+    4: hfo_py.CATCH,  # Used only by goalie to catch the ball
+}
