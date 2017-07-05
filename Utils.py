@@ -20,7 +20,7 @@ class hfoENV(Env):
         self.hfo_path = hfo_py.get_hfo_path()
         self.configure()
         self.env = hfo_py.HFOEnvironment()
-        self.env.connectToServer(feature_set=LOW_LEVEL_FEATURE_SET, config_dir=hfo_py.get_config_path(), )
+        self.env.connectToServer(feature_set=LOW_LEVEL_FEATURE_SET, config_dir=hfo_py.get_config_path(), server_port=6001)
         self.game_info = GameInfo(1)
 
     def close(self):
