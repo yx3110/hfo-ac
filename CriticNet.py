@@ -24,11 +24,11 @@ def bound(grad, param, max_val, min_val):
 
 
 def bound_grads(cur_grads, cur_actions, index):
-    if 0 <= index < 4:
+    if 0 <= index < 3:
         cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_act_val, min_act_val)
-    if index == 4 or index == 8:
+    elif index == 3 or index == 6:
         cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_power, min_power)
-    elif index == 5 or index == 6 or index == 7 or index == 9:
+    elif index == 4 or index == 5 or index == 7:
         cur_grads[index] = bound(cur_grads[index], cur_actions[index], max_turn_angle, min_turn_angle)
 
 
@@ -41,8 +41,8 @@ class CriticNet:
         self.sess = sess
         K.set_session(sess)
 
-        self.model, self.action, self.state = self.create_critic_network(self.input_size, 10)
-        self.target_model, self.target_action, self.target_state = self.create_critic_network(self.input_size, 10)
+        self.model, self.action, self.state = self.create_critic_network(self.input_size, 8)
+        self.target_model, self.target_action, self.target_state = self.create_critic_network(self.input_size, 8)
         self.action_grads = tf.gradients(self.model.output, self.action)  # GRADIENTS for policy update
         self.sess.run(tf.global_variables_initializer())
 

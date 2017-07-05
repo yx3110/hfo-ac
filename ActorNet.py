@@ -26,7 +26,7 @@ class ActorNet:
         self.model, self.weights, self.state = self.create_actor_network(self.input_size)
         self.target_model, self.target_weights, self.target_state = self.create_actor_network(self.input_size)
 
-        self.action_gradient = tf.placeholder(tf.float32, [None, 10])
+        self.action_gradient = tf.placeholder(tf.float32, [None, 8])
         self.params_grad = tf.gradients(self.model.output, self.weights, -self.action_gradient)
         grads = zip(self.params_grad, self.weights)
         self.optimize = tf.train.AdamOptimizer(learning_rate).apply_gradients(grads)
@@ -64,10 +64,10 @@ class ActorNet:
                        bias_initializer=initializers.glorot_normal(), name='actor_d4')(
             relu3)
         relu4 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re4')(dense4)
-        action_out = Dense(4, kernel_initializer=initializers.glorot_normal(),
+        action_out = Dense(3, kernel_initializer=initializers.glorot_normal(),
                            bias_initializer=initializers.glorot_normal(), name='actor_aout')(
             relu4)
-        param_out = Dense(6, kernel_initializer=initializers.glorot_normal(),
+        param_out = Dense(5, kernel_initializer=initializers.glorot_normal(),
                           bias_initializer=initializers.glorot_normal(), name='actor_pout')(
             relu4)
         actor_out = layers.concatenate([action_out, param_out], axis=1)
