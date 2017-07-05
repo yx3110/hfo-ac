@@ -43,7 +43,7 @@ if use_gpu:
     config.gpu_options.allow_growth = True
 else:
     config = tf.ConfigProto()
-
+print 'here'
 exp_buffer = ExpBuffer()
 total_reward = 0
 sess = tf.Session(config=config)
