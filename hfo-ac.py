@@ -65,13 +65,23 @@ if load_model:
     except:
         print("Cannot find the weight")
 
-env = hfoENV()
+players = []
+player1 = hfoENV(1)
+player2 = hfoENV(2)
+players.append(player1)
+players.append(player2)
+
+
+
 
 for episode in range(num_episodes):
-    while env.game_info.status == IN_GAME:
+    init_step(players)
+    define_roles(players)
+    while player1.game_info.status == IN_GAME:
+        define_roles(players)
         loss = 0
         # Grab the state features from the environment
-        state0 = env.env.getState()
+        state0 = player1.env.getState()
         action_arr = actor.model.predict(np.reshape(state0, [1, num_features]))[0]
         dice = np.random.uniform(0, 1)
         if dice < e and train:
@@ -84,7 +94,7 @@ for episode in range(num_episodes):
             e -= step_drop
 
         # Take an action and get the current game status
-        state1, reward, done, _ = env.step(action_arr)
+        state1, reward, done, _ = player1.step(action_arr)
         print action_arr
 
         # Fill buffer with record
@@ -121,10 +131,10 @@ for episode in range(num_episodes):
         print("Episode", episode + 1, "Step", step_counter, "Reward", reward, "Loss", loss)
 
     # Check the outcome of the episode
-    total_reward += env.game_info.total_reward
-    print('Episode %d ended with %s' % (episode + 1, env.env.statusToString(env.game_info.status)))
-    print("Episodic TOTAL REWARD @ " + str(episode + 1) + "-th Episode  : " + str(env.game_info.total_reward))
-    print("Total REWARD: ", total_reward, "EOT Reward", env.game_info.extrinsic_reward)
+    total_reward += player1.game_info.total_reward
+    print('Episode %d ended with %s' % (episode + 1, player1.env.statusToString(player1.game_info.status)))
+    print("Episodic TOTAL REWARD @ " + str(episode + 1) + "-th Episode  : " + str(player1.game_info.total_reward))
+    print("Total REWARD: ", total_reward, "EOT Reward", player1.game_info.extrinsic_reward)
     if np.mod(episode, 10) == 0 and train:
         actor.model.save_weights("actormodel.h5", overwrite=True)
         with open("actormodel.json", "w") as outfile:
@@ -133,10 +143,10 @@ for episode in range(num_episodes):
         critic.model.save_weights("criticmodel.h5", overwrite=True)
         with open("criticmodel.json", "w") as outfile:
             json.dump(critic.model.to_json(), outfile)
-    env.game_info.reset()
+    player1.game_info.reset()
     # Quit if the server goes down
 
     if done == SERVER_DOWN:
-        env.act(QUIT)
+        player1.act(QUIT)
         break
     episode += 1

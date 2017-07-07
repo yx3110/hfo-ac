@@ -11,8 +11,29 @@ from rl.core import Env
 kPassVelThreshold = -.5
 
 
+def define_roles(players):
+    dis = players[0].prev_ball_prox
+    passer = players[0]
+    for p in players:
+        if p.prev_ball_prox < dis:
+            passer = p
+            dis = p.prev_ball_prox
+
+    for p in players:
+        if p == passer:
+            p.role = 0
+        else:
+            p.role = 1
+
+
+def init_step(players):
+    for p in players:
+        p.env.act(NOOP)
+        p.game_info.update(p.env)
+
+
 class hfoENV(Env):
-    def __init__(self):
+    def __init__(self, unum):
         super(hfoENV, self)
         self.viewer = None
         self.server_process = None
@@ -20,8 +41,9 @@ class hfoENV(Env):
         self.hfo_path = hfo_py.get_hfo_path()
         self.configure()
         self.env = hfo_py.HFOEnvironment()
-        self.env.connectToServer(feature_set=LOW_LEVEL_FEATURE_SET, config_dir=hfo_py.get_config_path(), server_port=6001)
-        self.game_info = GameInfo(1)
+        self.env.connectToServer(feature_set=LOW_LEVEL_FEATURE_SET, config_dir=hfo_py.get_config_path(),
+                                 server_port=6000)
+        self.game_info = GameInfo(unum)
 
     def close(self):
         self.env.act(hfo_py.QUIT)
@@ -67,7 +89,7 @@ class hfoENV(Env):
     def _start_hfo_server(self, frames_per_trial=100,
                           untouched_time=100, offense_agents=1,
                           defense_agents=0, offense_npcs=0,
-                          defense_npcs=0, sync_mode=True, port=6001,
+                          defense_npcs=0, sync_mode=True, port=6000,
                           offense_on_ball=0, fullstate=True, seed=-1,
                           ball_x_min=0.0, ball_x_max=0.2,
                           verbose=False, log_game=False,
@@ -190,6 +212,7 @@ class GameInfo:
         self.prev_player_on_ball = 0
         self.player_on_ball = 0
         self.pass_active = False
+        self.role = 0
 
     def reset(self):
         self.got_kickable_reward = False
@@ -207,10 +230,10 @@ class GameInfo:
         self.prev_player_on_ball = 0
         self.player_on_ball = 0
         self.pass_active = False
+        self.role = 0
 
     def update(self, hfo_env):
         self.status = hfo_env.step()
-        print 'status: ' + str(self.episode_over)
         if self.status != IN_GAME:
             self.episode_over = True
         cur_obs = hfo_env.getState()
@@ -255,6 +278,23 @@ class GameInfo:
         return cur_obs, self.get_reward(), self.episode_over, None
 
     def get_reward(self):
+        if self.role == 1:
+            return self.get_striker_reward()
+        else:
+            return self.get_passer_reward()
+
+    def get_passer_reward(self):
+        # TODO: implement passer reward
+        res = 0
+        res += self.move_to_ball_reward()
+        res += self.kick_reward() * 3
+        EOT_reward = self.EOT_reward()
+        res += EOT_reward
+        self.extrinsic_reward += EOT_reward
+        self.total_reward += res
+        return res
+
+    def get_striker_reward(self):
         res = 0
         res += self.move_to_ball_reward()
         res += self.kick_reward() * 3
