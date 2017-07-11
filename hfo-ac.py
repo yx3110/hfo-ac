@@ -8,6 +8,7 @@ import json
 
 import tensorflow as tf
 from keras import backend as K
+
 from ActorNet import ActorNet
 from CriticNet import CriticNet
 from Utils import *
@@ -29,8 +30,9 @@ tau = 0.001  # Tau value used in target network update
 num_features = (58 + (num_players - 1) * 8 + num_opponents * 8) * num_players
 step_counter = 0
 load_model = False  # Load the model
-use_gpu = True
+use_gpu = False
 train = True
+visualize = False
 if train:
     e = startE
 else:
@@ -66,7 +68,8 @@ if load_model:
         print("Cannot find the weight")
 
 env = hfoENV()
-
+if visualize:
+    env.render()
 for episode in range(num_episodes):
     while env.game_info.status == IN_GAME:
         loss = 0

@@ -1,11 +1,11 @@
 import keras.backend as K
 import tensorflow as tf
-from keras.layers import Input
+from keras import initializers
+from keras import layers
 from keras.engine import Model
+from keras.layers import Input
 from keras.layers import LeakyReLU
 from keras.layers.core import Dense
-from keras import layers
-from keras import initializers
 from keras.optimizers import Nadam
 
 max_turn_angle = 180
@@ -48,32 +48,30 @@ class ActorNet:
     def create_actor_network(self, state_size):
         print("Building actor model")
         actor_input = Input(shape=[state_size], name='actor_in')
-        dense1 = Dense(1024, kernel_initializer=initializers.glorot_normal(),
-                       bias_initializer=initializers.glorot_normal(), name='actor_d1')(
+        dense1 = Dense(512, kernel_initializer=initializers.glorot_normal(),
+                       bias_initializer='zeros', name='actor_d1')(
             actor_input)
         relu1 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re1')(dense1)
-        dense2 = Dense(512, kernel_initializer=initializers.glorot_normal(),
-                       bias_initializer=initializers.glorot_normal(), name='actor_d2')(
+        dense2 = Dense(256, kernel_initializer=initializers.glorot_normal(),
+                       bias_initializer='zeros', name='actor_d2')(
             relu1)
         relu2 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re2')(dense2)
-        dense3 = Dense(256, kernel_initializer=initializers.glorot_normal(),
-                       bias_initializer=initializers.glorot_normal(), name='actor_d3')(
+        dense3 = Dense(128, kernel_initializer=initializers.glorot_normal(),
+                       bias_initializer='zeros', name='actor_d3')(
             relu2)
         relu3 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re3')(dense3)
-        dense4 = Dense(128, kernel_initializer=initializers.glorot_normal(),
-                       bias_initializer=initializers.glorot_normal(), name='actor_d4')(
+        dense4 = Dense(64, kernel_initializer=initializers.glorot_normal(),
+                       bias_initializer='zeros', name='actor_rnn1')(
             relu3)
-        relu4 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re4')(dense4)
         action_out = Dense(3, kernel_initializer=initializers.glorot_normal(),
-                           bias_initializer=initializers.glorot_normal(), name='actor_aout')(
-            relu4)
+                           bias_initializer='zeros', name='actor_aout')(
+            dense4)
         param_out = Dense(5, kernel_initializer=initializers.glorot_normal(),
-                          bias_initializer=initializers.glorot_normal(), name='actor_pout')(
-            relu4)
+                          bias_initializer='zeros', name='actor_pout')(
+            dense4)
         actor_out = layers.concatenate([action_out, param_out], axis=1)
-        print 'here3'
         model = Model(inputs=actor_input, outputs=actor_out)
-        adam = Nadam(lr=self.learning_rate)
-        model.compile(loss='mse', optimizer=adam)
+        nAdam = Nadam(lr=self.learning_rate)
+        model.compile(loss='mse', optimizer=nAdam)
         model.summary()
         return model, model.trainable_weights, actor_input
