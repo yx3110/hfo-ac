@@ -127,11 +127,11 @@ for episode in range(num_episodes):
     print("Episodic TOTAL REWARD @ " + str(episode + 1) + "-th Episode  : " + str(env.game_info.total_reward))
     print("Total REWARD: ", total_reward, "EOT Reward", env.game_info.extrinsic_reward)
     if np.mod(episode, 1000) == 0 and train:
-        actor.model.save_weights("actormodel.h5" + str(episode), overwrite=True)
+        actor.model.save_weights('actormodel' + str(episode) + '.h5', overwrite=True)
         with open("actormodel.json", "w") as outfile:
             json.dump(actor.model.to_json(), outfile)
 
-        critic.model.save_weights("criticmodel.h5" + str(episode), overwrite=True)
+        critic.model.save_weights('criticmodel' + str(episode) + '.h5', overwrite=True)
         with open("criticmodel.json", "w") as outfile:
             json.dump(critic.model.to_json(), outfile)
     env.game_info.reset()
