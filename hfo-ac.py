@@ -8,6 +8,7 @@ import json
 
 import tensorflow as tf
 from keras import backend as K
+
 from ActorNet import ActorNet
 from CriticNet import CriticNet
 from Utils import *
@@ -125,12 +126,12 @@ for episode in range(num_episodes):
     print('Episode %d ended with %s' % (episode + 1, env.env.statusToString(env.game_info.status)))
     print("Episodic TOTAL REWARD @ " + str(episode + 1) + "-th Episode  : " + str(env.game_info.total_reward))
     print("Total REWARD: ", total_reward, "EOT Reward", env.game_info.extrinsic_reward)
-    if np.mod(episode, 10) == 0 and train:
-        actor.model.save_weights("actormodel.h5", overwrite=True)
+    if np.mod(episode, 1000) == 0 and train:
+        actor.model.save_weights("actormodel.h5" + str(episode), overwrite=True)
         with open("actormodel.json", "w") as outfile:
             json.dump(actor.model.to_json(), outfile)
 
-        critic.model.save_weights("criticmodel.h5", overwrite=True)
+        critic.model.save_weights("criticmodel.h5" + str(episode), overwrite=True)
         with open("criticmodel.json", "w") as outfile:
             json.dump(critic.model.to_json(), outfile)
     env.game_info.reset()
