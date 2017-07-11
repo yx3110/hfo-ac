@@ -128,7 +128,7 @@ for episode in range(num_episodes):
     print('Episode %d ended with %s' % (episode + 1, env.env.statusToString(env.game_info.status)))
     print("Episodic TOTAL REWARD @ " + str(episode + 1) + "-th Episode  : " + str(env.game_info.total_reward))
     print("Total REWARD: ", total_reward, "EOT Reward", env.game_info.extrinsic_reward)
-    if np.mod(episode, 10) == 0 and train:
+    if np.mod(episode, 100) == 0 and train:
         actor.model.save_weights('actormodel' + str(episode) + '.h5', overwrite=True)
         with open("actormodel.json", "w") as outfile:
             json.dump(actor.model.to_json(), outfile)
