@@ -22,7 +22,7 @@ endE = 0.1  # Final chance of random action
 evaluate_e = 0  # Epsilon used in evaluation
 discount_factor = 0.99
 annealing_steps = 10000.  # How many steps of training to reduce startE to endE.
-num_episodes = 10000  # How many episodes of game environment to train network with.
+num_episodes = 30000  # How many episodes of game environment to train network with.
 pre_train_steps = 1000  # How many steps of random actions before training begins.
 num_players = 1
 num_opponents = 0
@@ -48,6 +48,8 @@ total_reward = 0
 sess = tf.Session(config=config)
 
 K.set_session(sess)
+reward_buffer = []
+reward_buffer_size = 100
 
 actor = ActorNet(team_size=num_players, enemy_size=num_opponents, tau=tau, sess=sess)
 critic = CriticNet(team_size=num_players, enemy_size=num_opponents, tau=tau, sess=sess)
@@ -125,7 +127,17 @@ for episode in range(num_episodes):
     total_reward += env.game_info.total_reward
     print('Episode %d ended with %s' % (episode + 1, env.env.statusToString(env.game_info.status)))
     print("Episodic TOTAL REWARD @ " + str(episode + 1) + "-th Episode  : " + str(env.game_info.total_reward))
-    print("Total REWARD: ", total_reward, "EOT Reward", env.game_info.extrinsic_reward)
+    reward_buffer.append(env.game_info.total_reward)
+    if len(reward_buffer) > reward_buffer_size:
+        reward_buffer.pop(0)
+    total_over_last100 = 0
+    for r in reward_buffer:
+        total_over_last100 += r
+
+    average = np.divide(total_over_last100, len(reward_buffer))
+
+    print("Total REWARD: ", total_reward, "EOT Reward", env.game_info.extrinsic_reward,
+          "average reward over last 100 episodes:", average)
     if np.mod(episode, 100) == 0 and train:
         actor.model.save_weights('actormodel' + str(episode) + '.h5', overwrite=True)
         with open("actormodel.json", "w") as outfile:

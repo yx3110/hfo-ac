@@ -1,9 +1,9 @@
 import keras.backend as K
 import numpy as np
 import tensorflow as tf
-from keras.layers import Input
 from keras import layers
 from keras.engine import Model
+from keras.layers import Input
 from keras.layers import LeakyReLU, initializers
 from keras.layers.core import Dense
 from keras.optimizers import Nadam
@@ -70,19 +70,19 @@ class CriticNet:
         critic_input_state = Input(shape=[state_size], name='critic_sin')
         critic_input_final = layers.concatenate([critic_input_state, critic_input_action], axis=1, name='critic_in')
         dense1 = Dense(1024, kernel_initializer=initializers.glorot_normal(),
-                       bias_initializer=initializers.glorot_normal(), name='critic_d1')(critic_input_final)
+                       bias_initializer='zeros', name='critic_d1')(critic_input_final)
         relu1 = LeakyReLU(alpha=self.relu_neg_slope, name='critic_re1')(dense1)
         dense2 = Dense(512, kernel_initializer=initializers.glorot_normal(),
-                       bias_initializer=initializers.glorot_normal(), name='critic_d2')(relu1)
+                       bias_initializer='zeros', name='critic_d2')(relu1)
         relu2 = LeakyReLU(alpha=self.relu_neg_slope, name='critic_re2')(dense2)
         dense3 = Dense(256, kernel_initializer=initializers.glorot_normal(),
-                       bias_initializer=initializers.glorot_normal(), name='critic_d3')(relu2)
+                       bias_initializer='zeros', name='critic_d3')(relu2)
         relu3 = LeakyReLU(alpha=self.relu_neg_slope, name='critic_re3')(dense3)
         dense4 = Dense(128, kernel_initializer=initializers.glorot_normal(),
-                       bias_initializer=initializers.glorot_normal(), name='critic_d4')(relu3)
+                       bias_initializer='zeros', name='critic_d4')(relu3)
         relu4 = LeakyReLU(alpha=self.relu_neg_slope, name='critic_re4')(dense4)
         critic_out = Dense(1, kernel_initializer=initializers.glorot_normal(),
-                           bias_initializer=initializers.glorot_normal())(relu4)
+                           bias_initializer='zeros')(relu4)
 
         model = Model(inputs=[critic_input_state, critic_input_action], outputs=critic_out)
         adam = Nadam(lr=self.learning_rate)
