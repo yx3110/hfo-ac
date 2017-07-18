@@ -30,7 +30,7 @@ tau = 0.001  # Tau value used in target network update
 num_features = (58 + (num_players - 1) * 8 + num_opponents * 8) * num_players
 step_counter = 0
 load_model = False  # Load the model
-use_gpu = True
+use_gpu = False
 train = True
 if train:
     e = startE
@@ -60,16 +60,15 @@ critic = CriticNet(team_size=num_players, enemy_size=num_opponents, tau=tau, ses
 print("Loading the weights")
 if load_model:
     try:
-        actor.model.load_weights("actormodel.h5")
-        critic.model.load_weights("criticmodel.h5")
-        actor.target_model.load_weights("actormodel.h5")
-        critic.target_model.load_weights("criticmodel.h5")
+        actor.model.load_weights("actormodel29500.h5")
+        critic.model.load_weights("criticmodel29500.h5")
+        actor.target_model.load_weights("actormodel29500.h5")
+        critic.target_model.load_weights("criticmodel29500.h5")
         print("Weight load successfully")
     except:
         print("Cannot find the weight")
 
 env = hfoENV()
-
 for episode in range(num_episodes):
     while env.game_info.status == IN_GAME:
         loss = 0

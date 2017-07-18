@@ -1,11 +1,9 @@
+import signal
 import subprocess
-
 import time
 
-import hfo_py
-import signal
-from hfo import *
 import numpy as np
+from hfo_py import *
 from rl.core import Env
 
 kPassVelThreshold = -.5
@@ -17,14 +15,14 @@ class hfoENV(Env):
         self.viewer = None
         self.server_process = None
         self.server_port = None
-        self.hfo_path = hfo_py.get_hfo_path()
+        self.hfo_path = get_hfo_path()
         self.configure()
-        self.env = hfo_py.HFOEnvironment()
-        self.env.connectToServer(feature_set=LOW_LEVEL_FEATURE_SET, config_dir=hfo_py.get_config_path(), server_port=6001)
+        self.env = HFOEnvironment()
+        self.env.connectToServer(feature_set=LOW_LEVEL_FEATURE_SET, config_dir=get_config_path(), server_port=6001)
         self.game_info = GameInfo(1)
 
     def close(self):
-        self.env.act(hfo_py.QUIT)
+        self.env.act(QUIT)
         self.env.step()
         os.kill(self.server_process.pid, signal.SIGINT)
         if self.viewer is not None:
@@ -60,7 +58,7 @@ class hfoENV(Env):
         used with a *.rcg logfile to replay a game. See details at
         https://github.com/LARG/HFO/blob/master/doc/manual.pdf.
         """
-        cmd = hfo_py.get_viewer_path() + \
+        cmd = get_viewer_path() + \
               " --connect --port %d" % (self.server_port)
         self.viewer = subprocess.Popen(cmd.split(' '), shell=False)
 
@@ -110,18 +108,18 @@ class hfoENV(Env):
 
     def take_action(self, action):
         action_type = ACTION_LOOKUP[action[0]]
-        if action_type == hfo_py.DASH:
+        if action_type == DASH:
             self.env.act(action_type, action[1], action[2])
             print str(action_type) + ' ' + str(action[1]) + ' ' + str(action[2])
-        elif action_type == hfo_py.TURN:
+        elif action_type == TURN:
             self.env.act(action_type, action[3])
             print str(action_type) + ' ' + str(action[3])
-        elif action_type == hfo_py.KICK:
+        elif action_type == KICK:
             self.env.act(action_type, action[4], action[5])
             print str(action_type) + ' ' + str(action[4]) + ' ' + str(action[5])
         else:
             print('Unrecognized action %d' % action_type)
-            self.env.act(hfo_py.NOOP)
+            self.env.act(NOOP)
 
         return self.game_info.update(self.env)
 
@@ -291,9 +289,9 @@ class GameInfo:
 
 
 ACTION_LOOKUP = {
-    0: hfo_py.DASH,
-    1: hfo_py.TURN,
-    2: hfo_py.KICK,
-    3: hfo_py.TACKLE,  # Used on defense to slide tackle the ball
-    4: hfo_py.CATCH,  # Used only by goalie to catch the ball
+    0: DASH,
+    1: TURN,
+    2: KICK,
+    3: TACKLE,  # Used on defense to slide tackle the ball
+    4: CATCH,  # Used only by goalie to catch the ball
 }
