@@ -13,7 +13,7 @@ from ActorNet import ActorNet
 from CriticNet import CriticNet
 from Utils import *
 
-np.random.seed(42)
+np.random.seed(seed=int(time.time()))
 
 batch_size = 32  # batch size for training
 y = .99  # Discount factor on the target Q-values
@@ -60,15 +60,16 @@ critic = CriticNet(team_size=num_players, enemy_size=num_opponents, tau=tau, ses
 print("Loading the weights")
 if load_model:
     try:
-        actor.model.load_weights("actormodel29500.h5")
-        critic.model.load_weights("criticmodel29500.h5")
-        actor.target_model.load_weights("actormodel29500.h5")
-        critic.target_model.load_weights("criticmodel29500.h5")
+        actor.model.load_weights("actormodel860020170719.h5")
+        critic.model.load_weights("criticmodel860020170719.h5")
+        actor.target_model.load_weights("actormodel860020170719.h5")
+        critic.target_model.load_weights("criticmodel860020170719.h5")
         print("Weight load successfully")
     except:
         print("Cannot find the weight")
 
 env = hfoENV()
+# env.render()
 for episode in range(num_episodes):
     while env.game_info.status == IN_GAME:
         loss = 0
@@ -138,11 +139,11 @@ for episode in range(num_episodes):
     print("Total REWARD: ", total_reward, "EOT Reward", env.game_info.extrinsic_reward,
           "average reward over last 100 episodes:", average)
     if np.mod(episode, 100) == 0 and train:
-        actor.model.save_weights('actormodel' + str(episode) + '.h5', overwrite=True)
+        actor.model.save_weights('actormodel' + str(episode) + '20170724smaller' + '.h5', overwrite=True)
         with open("actormodel.json", "w") as outfile:
             json.dump(actor.model.to_json(), outfile)
 
-        critic.model.save_weights('criticmodel' + str(episode) + '.h5', overwrite=True)
+        critic.model.save_weights('criticmodel' + str(episode) + '20170724smaller' + '.h5', overwrite=True)
         with open("criticmodel.json", "w") as outfile:
             json.dump(critic.model.to_json(), outfile)
     env.game_info.reset()

@@ -69,16 +69,16 @@ class CriticNet:
         critic_input_action = Input(shape=[action_dim], name='critic_ain')
         critic_input_state = Input(shape=[state_size], name='critic_sin')
         critic_input_final = layers.concatenate([critic_input_state, critic_input_action], axis=1, name='critic_in')
-        dense1 = Dense(512, kernel_initializer=initializers.glorot_normal(),
+        dense1 = Dense(256, kernel_initializer=initializers.glorot_normal(),
                        bias_initializer='zeros', name='critic_d1')(critic_input_final)
         relu1 = LeakyReLU(alpha=self.relu_neg_slope, name='critic_re1')(dense1)
-        dense2 = Dense(256, kernel_initializer=initializers.glorot_normal(),
+        dense2 = Dense(128, kernel_initializer=initializers.glorot_normal(),
                        bias_initializer='zeros', name='critic_d2')(relu1)
         relu2 = LeakyReLU(alpha=self.relu_neg_slope, name='critic_re2')(dense2)
-        dense3 = Dense(128, kernel_initializer=initializers.glorot_normal(),
+        dense3 = Dense(64, kernel_initializer=initializers.glorot_normal(),
                        bias_initializer='zeros', name='critic_d3')(relu2)
         relu3 = LeakyReLU(alpha=self.relu_neg_slope, name='critic_re3')(dense3)
-        dense4 = Dense(64, kernel_initializer=initializers.glorot_normal(),
+        dense4 = Dense(32, kernel_initializer=initializers.glorot_normal(),
                        bias_initializer='zeros', name='critic_d4')(relu3)
         relu4 = LeakyReLU(alpha=self.relu_neg_slope, name='critic_re4')(dense4)
         critic_out = Dense(1, kernel_initializer=initializers.glorot_normal(),

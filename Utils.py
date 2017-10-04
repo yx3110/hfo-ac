@@ -2,7 +2,6 @@ import signal
 import subprocess
 import time
 
-import numpy as np
 from hfo_py import *
 from rl.core import Env
 
@@ -19,7 +18,7 @@ class hfoENV(Env):
         self.configure()
         self.env = HFOEnvironment()
         self.env.connectToServer(feature_set=LOW_LEVEL_FEATURE_SET, config_dir=get_config_path(), server_port=6001)
-        self.game_info = GameInfo(1)
+        self.game_info = GameInfo(self.env.getUnum())
 
     def close(self):
         self.env.act(QUIT)

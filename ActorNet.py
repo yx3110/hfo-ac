@@ -48,19 +48,19 @@ class ActorNet:
     def create_actor_network(self, state_size):
         print("Building actor model")
         actor_input = Input(shape=[state_size], name='actor_in')
-        dense1 = Dense(512, kernel_initializer=initializers.glorot_normal(),
+        dense1 = Dense(256, kernel_initializer=initializers.glorot_normal(),
                        bias_initializer='zeros', name='actor_d1')(
             actor_input)
         relu1 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re1')(dense1)
-        dense2 = Dense(256, kernel_initializer=initializers.glorot_normal(),
+        dense2 = Dense(128, kernel_initializer=initializers.glorot_normal(),
                        bias_initializer='zeros', name='actor_d2')(
             relu1)
         relu2 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re2')(dense2)
-        dense3 = Dense(128, kernel_initializer=initializers.glorot_normal(),
+        dense3 = Dense(64, kernel_initializer=initializers.glorot_normal(),
                        bias_initializer='zeros', name='actor_d3')(
             relu2)
         relu3 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re3')(dense3)
-        dense4 = Dense(64, kernel_initializer=initializers.glorot_normal(),
+        dense4 = Dense(32, kernel_initializer=initializers.glorot_normal(),
                        bias_initializer='zeros', name='actor_d4')(
             relu3)
         relu4 = LeakyReLU(alpha=self.relu_neg_slope, name='actor_re4')(dense4)
@@ -71,7 +71,6 @@ class ActorNet:
                           bias_initializer='zeros', name='actor_pout')(
             relu4)
         actor_out = layers.concatenate([action_out, param_out], axis=1)
-        print 'here3'
         model = Model(inputs=actor_input, outputs=actor_out)
         adam = Nadam(lr=self.learning_rate)
         model.compile(loss='mse', optimizer=adam)
